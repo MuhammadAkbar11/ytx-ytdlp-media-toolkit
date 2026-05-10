@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { AppConfig } from './config';
 import { DownloadEvent } from './events';
 import {
@@ -59,16 +60,11 @@ export interface NormalizedFormat {
   formatSelector: string;
 }
 
-export interface PresetInput {
-  config: AppConfig;
-  url: string;
-}
-
 export interface Preset {
   id: string;
-  name: string;
-  description: string;
-  createProfile(input: PresetInput): Partial<DownloadProfile>;
+  label: string;
+  description?: string;
+  profile: Partial<DownloadProfile>;
 }
 
 export interface RuntimeCapabilities {
