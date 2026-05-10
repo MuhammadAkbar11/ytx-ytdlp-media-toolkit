@@ -25,6 +25,19 @@ A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun an
 - `bun run dev`: Run the application from source.
 - `bun run build`: Compile TypeScript to JavaScript.
 - `bun run start`: Run the compiled application.
+- `bun test`: Run tests using Bun's test runner.
+- `bun test --watch`: Run tests in watch mode.
+
+## Testing
+
+The project uses Bun's built-in test runner. Tests are organized into:
+- `tests/unit/`: For unit tests of pure logic.
+- `tests/integration/`: For tests that interact with external systems or infrastructure.
+
+To run tests:
+```bash
+bun test
+```
 
 ## License
 
