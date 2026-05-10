@@ -1,5 +1,13 @@
 export type Recoverability = 'retryable' | 'configuration' | 'fatal';
 
+export type ErrorCategory =
+  | 'validation'
+  | 'process'
+  | 'configuration'
+  | 'network'
+  | 'dependency'
+  | 'workflow';
+
 export type AppErrorCode =
   | 'INVALID_URL'
   | 'MISSING_YTDLP'
@@ -13,5 +21,6 @@ export interface AppError {
   code: AppErrorCode;
   message: string;
   recoverability: Recoverability;
+  category: ErrorCategory;
   cause?: unknown;
 }
