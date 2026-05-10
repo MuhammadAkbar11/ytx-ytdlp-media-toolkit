@@ -1,1 +1,1 @@
-console.log("ytx initialized");
+console.log('ytx initialized');
