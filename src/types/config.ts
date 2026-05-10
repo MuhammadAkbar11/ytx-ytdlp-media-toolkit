@@ -1,6 +1,13 @@
-import { BrowserName, AudioBitrate, SubtitleOptions, MetadataOptions } from './common';
+import {
+  BrowserName,
+  AudioBitrate,
+  SubtitleOptions,
+  MetadataOptions,
+  VideoQuality,
+} from './common';
 
 export interface AppConfig {
+  preferredVideoQuality: VideoQuality | undefined;
   version: number;
   outputDirectory: string;
   preferredBrowser: BrowserName | null;

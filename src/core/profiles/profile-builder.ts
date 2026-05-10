@@ -1,0 +1,62 @@
+import { DownloadProfile, Preset } from '../../types/domain';
+import { AppConfig } from '../../types/config';
+
+export const SYSTEM_DEFAULTS: Partial<DownloadProfile> = {
+  mediaKind: 'video',
+  outputDirectory: '.',
+  filenameTemplate: '%(title)s.%(ext)s',
+  subtitleOptions: { mode: 'none', output: 'separate' },
+  metadataOptions: {
+    embedMetadata: false,
+    embedThumbnail: false,
+    embedChapters: false,
+  },
+  playlist: { mode: 'entire_playlist' },
+  useDownloadArchive: false,
+};
+
+export class ProfileBuilder {
+  /**
+   * Composes a final DownloadProfile by merging defaults, config, preset, and overrides.
+   * Follows the precedence order: System Defaults -> Config Defaults -> Preset Defaults -> Workflow Choices / Overrides
+   *
+   * @param url The validated URL.
+   * @param config The application configuration.
+   * @param preset The selected preset (optional).
+   * @param overrides Workflow-specific overrides (optional).
+   * @returns The fully composed DownloadProfile.
+   */
+  build(
+    url: string,
+    config: AppConfig,
+    preset?: Preset,
+    overrides?: Partial<DownloadProfile>
+  ): DownloadProfile {
+    const configDefaults: Partial<DownloadProfile> = {
+      outputDirectory: config.outputDirectory,
+      filenameTemplate: config.filenameTemplate,
+      browserCookies: config.preferredBrowser,
+      subtitleOptions: {
+        mode: config.subtitleOptions.mode,
+        output: config.subtitleOptions.output,
+      },
+      metadataOptions: {
+        embedMetadata: config.metadataOptions.embedMetadata,
+        embedThumbnail: config.metadataOptions.embedThumbnail,
+        embedChapters: config.metadataOptions.embedChapters,
+      },
+    };
+
+    const presetProfile = preset ? preset.profile : {};
+
+    const finalProfile: DownloadProfile = {
+      ...SYSTEM_DEFAULTS,
+      ...configDefaults,
+      ...presetProfile,
+      ...overrides,
+      url,
+    } as DownloadProfile;
+
+    return finalProfile;
+  }
+}
