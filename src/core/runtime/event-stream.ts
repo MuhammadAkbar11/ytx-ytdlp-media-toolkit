@@ -49,8 +49,19 @@ export class EventStream {
       case 'error':
         this.emit({ type: 'error', message: line.replace(/^ERROR:/, '').trim() });
         break;
+      case 'info': {
+        const itemMatch = line.match(/\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/);
+        if (itemMatch) {
+          this.emit({
+            type: 'item-started',
+            itemIndex: parseInt(itemMatch[1], 10),
+            totalItems: parseInt(itemMatch[2], 10),
+          });
+        }
+        break;
+      }
       default:
-        // Ignore info and unknown lines for now
+        // Ignore unknown lines for now
         break;
     }
   }
