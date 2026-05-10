@@ -10,6 +10,13 @@ import {
   PlaylistOptions,
 } from './common';
 
+export type UrlType = 'video' | 'playlist' | 'short' | 'music' | 'unknown';
+
+export interface ValidatedUrl {
+  normalizedUrl: string;
+  type: UrlType;
+}
+
 export interface AudioOptions {
   format: 'mp3';
   bitrate: AudioBitrate;
