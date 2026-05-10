@@ -1,0 +1,49 @@
+import { ProcessRunner } from '../../infrastructure/process/process-runner';
+import { DownloadProfile } from '../../types/domain';
+import { ArgumentBuilder } from '../../core/downloader/argument-builder';
+
+export class FilenamePreview {
+  constructor(
+    private processRunner: ProcessRunner,
+    private argumentBuilder: ArgumentBuilder
+  ) {}
+
+  /**
+   * Generates a preview of the filename using yt-dlp --get-filename.
+   * 
+   * @param profile The download profile.
+   * @returns The generated filename or an error message.
+   */
+  async generatePreview(profile: DownloadProfile): Promise<string> {
+    const args = this.argumentBuilder.build(profile);
+    
+    // Add --get-filename to get the output filename without downloading
+    args.push('--get-filename');
+
+    try {
+      const result = await this.processRunner.run('yt-dlp', args);
+      if (result.exitCode === 0) {
+        return result.stdout.trim();
+      } else {
+        return `Error: yt-dlp failed with exit code ${result.exitCode}`;
+      }
+    } catch (e) {
+      return `Error: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
+
+  /**
+   * Renders the preview to the console.
+   * 
+   * @param profile The download profile.
+   */
+  async render(profile: DownloadProfile): Promise<void> {
+    console.log('Generating filename preview...');
+    const filename = await this.generatePreview(profile);
+    
+    console.log('\nPreview Results:');
+    console.log(`- Download Directory: ${profile.outputDirectory}`);
+    console.log(`- Filename Template: ${profile.filenameTemplate}`);
+    console.log(`- Predicted Output: ${filename}`);
+  }
+}
