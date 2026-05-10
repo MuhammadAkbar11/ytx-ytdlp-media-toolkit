@@ -17,4 +17,5 @@ export const DEFAULT_CONFIG: AppConfig = {
   },
   useDownloadArchive: true,
   defaultPreset: 'balanced',
+  preferredVideoQuality: undefined,
 };
