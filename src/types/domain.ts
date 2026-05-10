@@ -94,7 +94,7 @@ export interface YtDlpInspection {
 }
 
 export interface DownloadSession {
-  url?: string;
+  url?: ValidatedUrl;
   info?: YtDlpInfo;
   formats?: NormalizedFormat[];
   selectedPreset?: Preset;
