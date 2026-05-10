@@ -1,0 +1,15 @@
+{
+  "name": "ytx",
+  "version": "0.1.0",
+  "description": "A CLI tool for downloading YouTube videos using yt-dlp",
+  "main": "src/index.ts",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "build": "tsc",
+    "start": "bun run dist/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
