@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun run src/index.ts",
+    "dev:hot": "bun --watch --hot run src/index.ts",
     "build": "tsc",
     "start": "bun run dist/index.js",
     "lint": "eslint .",
