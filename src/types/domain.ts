@@ -76,6 +76,7 @@ export interface RuntimeCapabilities {
 export interface YtDlpInfo {
   id?: string;
   title?: string;
+  duration?: number;
   webpageUrl: string;
   isPlaylist: boolean;
   entriesCount?: number;
