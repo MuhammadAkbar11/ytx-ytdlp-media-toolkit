@@ -72,7 +72,7 @@ export class ArgumentBuilder {
 
     // 5. Archive
     if (profile.useDownloadArchive) {
-      args.push('--download-archive', 'download-archive.txt');
+      args.push('--download-archive', profile.archivePath || 'download-archive.txt');
     }
 
     // 6. Output Template
