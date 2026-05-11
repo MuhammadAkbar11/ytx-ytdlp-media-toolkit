@@ -1,11 +1,11 @@
 import { DownloadEvent, EventSubscriber } from '../../types/events';
 import { LineClassifier } from './line-classifier';
-import { ProgressParser } from './progress-parser';
+import { ProgressEventGenerator } from './progress-event-generator';
 
 export class EventStream {
   private subscribers: EventSubscriber[] = [];
   private classifier = new LineClassifier();
-  private parser = new ProgressParser();
+  private progressEventGenerator = new ProgressEventGenerator();
 
   /**
    * Subscribes to events.
@@ -39,8 +39,10 @@ export class EventStream {
 
     switch (classified.type) {
       case 'progress': {
-        const progress = this.parser.parse(line);
-        this.emit({ type: 'progress', progress });
+        const event = this.progressEventGenerator.generate(line);
+        if (event) {
+          this.emit(event);
+        }
         break;
       }
       case 'warning':
