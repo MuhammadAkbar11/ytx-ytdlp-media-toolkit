@@ -4,6 +4,7 @@ import { DownloadCommand } from './cli/commands/download-command';
 import { DoctorCommand } from './cli/commands/doctor-command';
 import { ConfigCommand } from './cli/commands/config-command';
 import { PresetCommand } from './cli/commands/preset-command';
+import { processLifecycleManager } from './infrastructure/process/process-lifecycle';
 import chalk from 'chalk';
 
 async function main() {
@@ -115,6 +116,12 @@ async function main() {
     .action((id) => {
       presetCommand.use(id);
     });
+
+  process.on('SIGINT', () => {
+    console.log(chalk.yellow('\n\n⚠ Interrupted by user. Cleaning up...'));
+    processLifecycleManager.killAll();
+    process.exit(0);
+  });
 
   try {
     await program.parseAsync(process.argv);

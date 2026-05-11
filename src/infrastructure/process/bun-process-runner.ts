@@ -1,5 +1,6 @@
 import Bun from 'bun';
 import { StreamNormalizer } from '../../core/runtime/stream-normalizer';
+import { processLifecycleManager } from './process-lifecycle';
 
 import { ProcessRunner } from './process-runner';
 import {
@@ -19,6 +20,8 @@ export class BunProcessRunner implements ProcessRunner {
       stdout: 'pipe',
       stderr: 'pipe',
     });
+
+    processLifecycleManager.register(process);
 
     const decoder = new TextDecoder();
 
@@ -59,13 +62,17 @@ export class BunProcessRunner implements ProcessRunner {
       return fullText;
     };
 
-    const [stdout, stderr] = await Promise.all([
-      readStream(process.stdout, options?.onStdout),
-      readStream(process.stderr, options?.onStderr),
-    ]);
+    try {
+      const [stdout, stderr] = await Promise.all([
+        readStream(process.stdout, options?.onStdout),
+        readStream(process.stderr, options?.onStderr),
+      ]);
 
-    const exitCode = await process.exited;
+      const exitCode = await process.exited;
 
-    return { exitCode, stdout, stderr };
+      return { exitCode, stdout, stderr };
+    } finally {
+      processLifecycleManager.unregister(process);
+    }
   }
 }
