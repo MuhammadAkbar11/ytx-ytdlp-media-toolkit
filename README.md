@@ -2,6 +2,16 @@
 
 A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun and TypeScript.
 
+## Features
+
+- **Interactive CLI**: Guided workflow with prompts and confirmations
+- **Cookie Support**: Use cookies from your browser for age-restricted or private videos
+- **Profile Management**: Save and reuse your favorite download settings
+- **Smart Configuration**: Auto-detects optimal format combinations
+- **Progress Tracking**: Real-time download progress and status
+- **Process Management**: Graceful handling of interrupted downloads
+- **Doctor Command**: Health checks for dependencies and configuration
+
 ## Prerequisites
 
 - [Bun](https://bun.sh/)
