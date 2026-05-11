@@ -32,7 +32,10 @@ export class Mp3DownloadWorkflow {
     const args = this.argumentBuilder.build(profile);
 
     // 3. Emit started event
-    this.eventStream.emit({ type: 'started' });
+    this.eventStream.emit({ 
+      type: 'started',
+      message: profile.browserCookies ? 'Fetching browser cookies...' : 'Starting download...'
+    });
 
     // 4. Execute yt-dlp
     try {

@@ -65,6 +65,28 @@ export class DownloadCommand {
         ],
       });
 
+      // Prompt for cookies
+      const useCookies = await select<'yes' | 'no'>({
+        message: 'Use cookies from browser (for restricted videos)?',
+        choices: [
+          { name: 'No', value: 'no' },
+          { name: 'Yes', value: 'yes' },
+        ],
+      });
+
+      let browserCookies: 'chrome' | 'firefox' | 'edge' | 'brave' | 'safari' | null = null;
+      if (useCookies === 'yes') {
+        browserCookies = await select<'chrome' | 'firefox' | 'edge' | 'brave' | 'safari'>({
+          message: 'Select browser:',
+          choices: [
+            { name: 'Brave', value: 'brave' },
+            { name: 'Chrome', value: 'chrome' },
+            { name: 'Firefox', value: 'firefox' },
+            { name: 'Edge', value: 'edge' },
+          ],
+        });
+      }
+
       // 4. Build base profile
       const profile: DownloadProfile = {
         url,
@@ -79,6 +101,7 @@ export class DownloadCommand {
         },
         playlist: { mode: 'entire_playlist' },
         useDownloadArchive: false,
+        browserCookies,
       };
 
       // 5. Execute workflow

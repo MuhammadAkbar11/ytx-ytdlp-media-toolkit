@@ -75,6 +75,11 @@ export class ArgumentBuilder {
       args.push('--download-archive', profile.archivePath || 'download-archive.txt');
     }
 
+    // 5.5 Browser Cookies
+    if (profile.browserCookies) {
+      args.push('--cookies-from-browser', profile.browserCookies);
+    }
+
     // 6. Output Template
     if (profile.outputDirectory && profile.filenameTemplate) {
       const template = path.join(

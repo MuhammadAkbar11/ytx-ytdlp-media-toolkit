@@ -1,7 +1,7 @@
 import { DownloadProgress } from '../core/runtime/progress-parser';
 
 export type DownloadEvent =
-  | { type: 'started' }
+  | { type: 'started'; message?: string }
   | { type: 'progress'; progress: DownloadProgress }
   | { type: 'warning'; message: string }
   | { type: 'error'; message: string }

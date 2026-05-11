@@ -58,4 +58,28 @@ describe('ArgumentBuilder', () => {
     expect(args).toContain('--download-archive');
     expect(args).toContain('download-archive.txt');
   });
+
+  test('should build arguments with browser cookies', () => {
+    const builder = new ArgumentBuilder();
+    const profile: DownloadProfile = {
+      url: 'https://youtube.com/watch?v=123',
+      mediaKind: 'video',
+      outputDirectory: '.',
+      filenameTemplate: '%(title)s.%(ext)s',
+      subtitleOptions: { mode: 'none', output: 'separate' },
+      metadataOptions: {
+        embedMetadata: false,
+        embedThumbnail: false,
+        embedChapters: false,
+      },
+      playlist: { mode: 'entire_playlist' },
+      useDownloadArchive: false,
+      browserCookies: 'chrome',
+    };
+
+    const args = builder.build(profile);
+
+    expect(args).toContain('--cookies-from-browser');
+    expect(args).toContain('chrome');
+  });
 });

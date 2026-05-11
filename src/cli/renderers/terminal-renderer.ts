@@ -43,7 +43,7 @@ export class TerminalRenderer {
       case 'started':
         this.clearProgress();
         console.log(chalk.green('🚀 Download started'));
-        this.spinner = ora('Starting download...').start();
+        this.spinner = ora(event.message || 'Starting download...').start();
         break;
       case 'completed':
         if (this.spinner) {
