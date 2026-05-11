@@ -1,10 +1,12 @@
 import { EventStream } from '../../core/runtime/event-stream';
 import { DownloadEvent } from '../../types/events';
 import chalk from 'chalk';
+import cliProgress from 'cli-progress';
 
 export class TerminalRenderer {
   private unsubscribe?: () => void;
-  private lastProgressLine: string = '';
+  private progressBar: cliProgress.SingleBar | null = null;
+  private hasStartedBar = false;
 
   constructor(private eventStream: EventStream) {}
 
@@ -24,9 +26,8 @@ export class TerminalRenderer {
     if (this.unsubscribe) {
       this.unsubscribe();
     }
-    // Clear the progress line if it was the last thing written
-    if (this.lastProgressLine) {
-      process.stdout.write('\n');
+    if (this.progressBar) {
+      this.progressBar.stop();
     }
   }
 
@@ -57,31 +58,37 @@ export class TerminalRenderer {
         console.log(chalk.blue(`ℹ Processing item ${event.itemIndex}/${event.totalItems}`));
         break;
       case 'progress': {
+        if (!this.progressBar) {
+          this.progressBar = new cliProgress.SingleBar({
+            format: 'Downloading |' + chalk.cyan('{bar}') + '| {percentage}% || Speed: {speed} || ETA: {eta} || Size: {totalSize}',
+            barCompleteChar: '\u2588',
+            barIncompleteChar: '\u2591',
+            hideCursor: true,
+            clearOnComplete: false
+          });
+        }
+        
         const percentage = event.progress.percentage ?? 0;
         const speed = event.progress.speed ?? 'unknown';
         const eta = event.progress.eta ?? 'unknown';
         const totalSize = event.progress.totalSize ?? 'unknown';
         
-        const barWidth = 20;
-        const filledWidth = Math.round((percentage / 100) * barWidth);
-        const emptyWidth = barWidth - filledWidth;
-        const bar = '[' + '='.repeat(filledWidth) + ' '.repeat(emptyWidth) + ']';
-        
-        const line = `${bar} ${percentage}% | Speed: ${speed} | ETA: ${eta} | Size: ${totalSize}`;
-        
-        // Use \r to overwrite the line
-        process.stdout.write(`\r${line}`);
-        this.lastProgressLine = line;
+        if (!this.hasStartedBar) {
+          this.progressBar.start(100, percentage, { speed, eta, totalSize });
+          this.hasStartedBar = true;
+        } else {
+          this.progressBar.update(percentage, { speed, eta, totalSize });
+        }
         break;
       }
     }
   }
 
   private clearProgress(): void {
-    if (this.lastProgressLine) {
-      // Overwrite with spaces and reset cursor
-      process.stdout.write('\r' + ' '.repeat(this.lastProgressLine.length) + '\r');
-      this.lastProgressLine = '';
+    if (this.progressBar) {
+      this.progressBar.stop();
+      this.progressBar = null;
+      this.hasStartedBar = false;
     }
   }
 }

@@ -1,25 +1,36 @@
 import { ConsoleLogger } from './utils/logger';
 import { ConfigService } from './core/config/config.service';
 import { BunProcessRunner } from './infrastructure/process/bun-process-runner';
+import { InspectionService } from './core/downloader/inspection.service';
+import { ArgumentBuilder } from './core/downloader/argument-builder';
+import { ProfileValidator } from './core/profiles/profile-validator';
+import { EventStream } from './core/runtime/event-stream';
+import { Mp4DownloadWorkflow } from './core/workflows/mp4-download-workflow';
+import { Mp3DownloadWorkflow } from './core/workflows/mp3-download-workflow';
+import { PresetRegistry } from './core/presets/preset-registry';
 
-/**
- * Composition Root
- *
- * This function instantiates and wires together the application's services.
- * It follows the constructor injection pattern recommended in the architecture guidelines.
- */
 export function bootstrap() {
   const logger = new ConsoleLogger();
-
   const configService = new ConfigService();
-
   const processRunner = new BunProcessRunner();
+  const presetRegistry = new PresetRegistry();
+  
+  const inspectionService = new InspectionService(processRunner);
+  const argumentBuilder = new ArgumentBuilder();
+  const profileValidator = new ProfileValidator();
+  const eventStream = new EventStream();
 
-  logger.info('Application services initialized');
+  const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
+  const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
 
   return {
     logger,
     configService,
     processRunner,
+    inspectionService,
+    eventStream,
+    mp4Workflow,
+    mp3Workflow,
+    presetRegistry,
   };
 }

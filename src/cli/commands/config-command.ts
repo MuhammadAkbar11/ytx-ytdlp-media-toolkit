@@ -31,7 +31,7 @@ export class ConfigCommand {
     }
   }
 
-  private get(key: string): void {
+  public get(key: string): void {
     if (!key) {
       console.error('Error: Please specify a key');
       return;
@@ -52,7 +52,7 @@ export class ConfigCommand {
     }
   }
 
-  private set(key: string, value: string): void {
+  public set(key: string, value: string): void {
     if (!key || value === undefined) {
       console.error('Error: Please specify both key and value');
       return;
@@ -92,7 +92,7 @@ export class ConfigCommand {
     }
   }
 
-  private reset(): void {
+  public reset(): void {
     try {
       this.configService.reset();
       console.log('Configuration reset to defaults');
@@ -103,7 +103,7 @@ export class ConfigCommand {
     }
   }
 
-  private list(): void {
+  public list(): void {
     try {
       const config = this.configService.getAll();
       console.log('Current Configuration:');

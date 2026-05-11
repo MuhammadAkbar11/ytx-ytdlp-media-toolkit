@@ -40,7 +40,8 @@ export class BunProcessRunner implements ProcessRunner {
           
           if (onLine) {
             buffer += chunk;
-            const lines = buffer.split('\n');
+            // Split on \r\n, \n, or \r
+            const lines = buffer.split(/\r\n|\n|\r/);
             buffer = lines.pop() || '';
             for (const line of lines) {
               onLine(line);

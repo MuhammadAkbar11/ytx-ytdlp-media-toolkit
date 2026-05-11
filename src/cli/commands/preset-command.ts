@@ -33,7 +33,7 @@ export class PresetCommand {
     }
   }
 
-  private list(): void {
+  public list(): void {
     const presets = this.presetRegistry.getAllPresets();
     console.log('Available Presets:');
     presets.forEach((p) => {
@@ -41,7 +41,7 @@ export class PresetCommand {
     });
   }
 
-  private show(id: string): void {
+  public show(id: string): void {
     if (!id) {
       console.error('Error: Please specify a preset ID');
       return;
@@ -57,7 +57,7 @@ export class PresetCommand {
     console.log(JSON.stringify(preset.profile, null, 2));
   }
 
-  private use(id: string): void {
+  public use(id: string): void {
     if (!id) {
       console.error('Error: Please specify a preset ID');
       return;
