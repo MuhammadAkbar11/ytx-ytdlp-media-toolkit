@@ -7,6 +7,7 @@ export class TerminalRenderer {
   private unsubscribe?: () => void;
   private progressBar: cliProgress.SingleBar | null = null;
   private hasStartedBar = false;
+  private currentPercentage = 0;
 
   constructor(private eventStream: EventStream) {}
 
@@ -38,6 +39,10 @@ export class TerminalRenderer {
         console.log(chalk.green('🚀 Download started'));
         break;
       case 'completed':
+        // Ensure bar shows 100% before stopping
+        if (this.progressBar) {
+          this.progressBar.update(100);
+        }
         this.clearProgress();
         console.log(chalk.green('✔ Download completed successfully'));
         break;
@@ -58,6 +63,15 @@ export class TerminalRenderer {
         console.log(chalk.blue(`ℹ Processing item ${event.itemIndex}/${event.totalItems}`));
         break;
       case 'progress': {
+        const percentage = event.progress.percentage ?? 0;
+        
+        // Ignore progress updates that go backwards (e.g. when post-processing starts)
+        if (percentage < this.currentPercentage) {
+          break;
+        }
+        
+        this.currentPercentage = percentage;
+
         if (!this.progressBar) {
           this.progressBar = new cliProgress.SingleBar({
             format: 'Downloading |' + chalk.cyan('{bar}') + '| {percentage}% || Speed: {speed} || ETA: {eta} || Size: {totalSize}',
@@ -68,7 +82,6 @@ export class TerminalRenderer {
           });
         }
         
-        const percentage = event.progress.percentage ?? 0;
         const speed = event.progress.speed ?? 'unknown';
         const eta = event.progress.eta ?? 'unknown';
         const totalSize = event.progress.totalSize ?? 'unknown';
@@ -89,6 +102,7 @@ export class TerminalRenderer {
       this.progressBar.stop();
       this.progressBar = null;
       this.hasStartedBar = false;
+      this.currentPercentage = 0;
     }
   }
 }
