@@ -1,4 +1,5 @@
 import Bun from 'bun';
+import { StreamNormalizer } from '../../core/runtime/stream-normalizer';
 
 import { ProcessRunner } from './process-runner';
 import {
@@ -27,7 +28,7 @@ export class BunProcessRunner implements ProcessRunner {
       onLine?: (line: string) => void
     ): Promise<string> => {
       let fullText = '';
-      let buffer = '';
+      const normalizer = new StreamNormalizer();
       const reader = stream.getReader();
 
       try {
@@ -39,18 +40,18 @@ export class BunProcessRunner implements ProcessRunner {
           fullText += chunk;
           
           if (onLine) {
-            buffer += chunk;
-            // Split on \r\n, \n, or \r
-            const lines = buffer.split(/\r\n|\n|\r/);
-            buffer = lines.pop() || '';
+            const lines = normalizer.processChunk(chunk);
             for (const line of lines) {
               onLine(line);
             }
           }
         }
         
-        if (buffer && onLine) {
-          onLine(buffer);
+        if (onLine) {
+          const lines = normalizer.flush();
+          for (const line of lines) {
+            onLine(line);
+          }
         }
       } finally {
         reader.releaseLock();
