@@ -10,6 +10,7 @@ export class TerminalRenderer {
   private progressBar: cliProgress.SingleBar | null = null;
   private hasStartedBar = false;
   private currentPercentage = 0;
+  private currentPayload: any = {};
   private spinner: any = null;
 
   constructor(private eventStream: EventStream) {}
@@ -50,7 +51,7 @@ export class TerminalRenderer {
           this.spinner.stop();
           this.spinner = null;
         }
-
+        
         // Ensure bar shows 100% before stopping
         if (this.progressBar) {
           this.progressBar.update(100);
@@ -67,22 +68,21 @@ export class TerminalRenderer {
         console.log(chalk.red(`✘ Download failed: ${event.error}`));
         break;
       case 'warning':
-        this.clearProgress();
+        this.pauseProgressBar();
         console.log(chalk.yellow(`⚠ Warning: ${event.message}`));
+        this.resumeProgressBar();
         break;
       case 'error':
-        if (this.spinner) {
-          this.spinner.stop();
-          this.spinner = null;
-        }
-        this.clearProgress();
+        this.pauseProgressBar();
         console.log(chalk.red(`✘ Error: ${event.message}`));
+        this.resumeProgressBar();
         break;
       case 'item-started':
-        this.clearProgress();
+        this.pauseProgressBar();
         console.log(
           chalk.blue(`ℹ Processing item ${event.itemIndex}/${event.totalItems}`)
         );
+        this.resumeProgressBar();
         break;
       case 'progress': {
         // Stop spinner when progress starts
@@ -92,13 +92,18 @@ export class TerminalRenderer {
         }
 
         const percentage = event.progress.percentage ?? 0;
-
+        
         // Ignore progress updates that go backwards (e.g. when post-processing starts)
         if (percentage < this.currentPercentage) {
           break;
         }
-
+        
         this.currentPercentage = percentage;
+
+        const speed = event.progress.speed ?? 'unknown';
+        const eta = event.progress.eta ?? 'unknown';
+        const totalSize = event.progress.totalSize ?? 'unknown';
+        this.currentPayload = { speed, eta, totalSize };
 
         if (!this.progressBar) {
           this.progressBar = new cliProgress.SingleBar({
@@ -112,19 +117,32 @@ export class TerminalRenderer {
             clearOnComplete: false,
           });
         }
-
-        const speed = event.progress.speed ?? 'unknown';
-        const eta = event.progress.eta ?? 'unknown';
-        const totalSize = event.progress.totalSize ?? 'unknown';
-
+        
         if (!this.hasStartedBar) {
-          this.progressBar.start(100, percentage, { speed, eta, totalSize });
+          this.progressBar.start(100, percentage, this.currentPayload);
           this.hasStartedBar = true;
         } else {
-          this.progressBar.update(percentage, { speed, eta, totalSize });
+          this.progressBar.update(percentage, this.currentPayload);
         }
         break;
       }
+    }
+  }
+
+  private pauseProgressBar(): void {
+    if (this.progressBar) {
+      this.progressBar.stop();
+    }
+    if (this.spinner) {
+      this.spinner.stop();
+    }
+  }
+
+  private resumeProgressBar(): void {
+    if (this.progressBar && this.hasStartedBar) {
+      this.progressBar.start(100, this.currentPercentage, this.currentPayload);
+    } else if (this.spinner) {
+      this.spinner.start();
     }
   }
 
@@ -138,6 +156,7 @@ export class TerminalRenderer {
       this.progressBar = null;
       this.hasStartedBar = false;
       this.currentPercentage = 0;
+      this.currentPayload = {};
     }
   }
 }
