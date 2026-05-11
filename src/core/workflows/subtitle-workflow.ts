@@ -1,63 +1,16 @@
-import { DownloadProfile } from '../../types/domain';
-import { Result, ok, fail } from '../../utils/result';
-import { ProfileValidator, ValidationIssue } from '../profiles/profile-validator';
+import { BaseDownloadWorkflow } from './base-download-workflow';
+import { ProfileValidator } from '../profiles/profile-validator';
 import { ArgumentBuilder } from '../downloader/argument-builder';
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
-import { ProcessExecutionResult } from '../../types/process';
 import { EventStream } from '../runtime/event-stream';
 
-export class SubtitleWorkflow {
+export class SubtitleWorkflow extends BaseDownloadWorkflow {
   constructor(
-    private profileValidator: ProfileValidator,
-    private argumentBuilder: ArgumentBuilder,
-    private processRunner: ProcessRunner,
-    private eventStream: EventStream
-  ) {}
-
-  /**
-   * Runs the subtitle download workflow.
-   * Validates the profile, builds arguments, and executes yt-dlp with event streaming.
-   *
-   * @param profile The download profile to execute.
-   * @returns A Result containing the ProcessExecutionResult or a list of validation issues.
-   */
-  async run(profile: DownloadProfile): Promise<Result<ProcessExecutionResult, ValidationIssue[]>> {
-    // 1. Validate Profile
-    const valRes = this.profileValidator.validate(profile);
-    if (!valRes.ok) {
-      return fail(valRes.error);
-    }
-
-    // 2. Build Arguments
-    const args = this.argumentBuilder.build(profile);
-
-    // 3. Emit started event
-    this.eventStream.emit({ type: 'started' });
-
-    // 4. Execute yt-dlp
-    try {
-      const result = await this.processRunner.run('yt-dlp', args, {
-        onStdout: (line) => this.eventStream.processLine(line),
-        onStderr: (line) => this.eventStream.processLine(line),
-      });
-      
-      if (result.exitCode !== 0) {
-        this.eventStream.emit({ type: 'failed', error: `yt-dlp failed with exit code ${result.exitCode}` });
-        return fail([{
-          category: 'workflow-conflicts',
-          message: `yt-dlp failed with exit code ${result.exitCode}: ${result.stderr}`,
-        }]);
-      }
-      
-      this.eventStream.emit({ type: 'completed' });
-      return ok(result);
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      this.eventStream.emit({ type: 'failed', error: `Failed to execute yt-dlp: ${errorMsg}` });
-      return fail([{
-        category: 'workflow-conflicts',
-        message: `Failed to execute yt-dlp: ${errorMsg}`,
-      }]);
-    }
+    profileValidator: ProfileValidator,
+    argumentBuilder: ArgumentBuilder,
+    processRunner: ProcessRunner,
+    eventStream: EventStream
+  ) {
+    super(profileValidator, argumentBuilder, processRunner, eventStream);
   }
 }
