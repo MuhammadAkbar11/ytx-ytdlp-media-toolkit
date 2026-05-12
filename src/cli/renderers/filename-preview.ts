@@ -1,6 +1,7 @@
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { DownloadProfile } from '../../types/domain';
 import { ArgumentBuilder } from '../../core/downloader/argument-builder';
+import ora from 'ora';
 
 export class FilenamePreview {
   constructor(
@@ -10,13 +11,13 @@ export class FilenamePreview {
 
   /**
    * Generates a preview of the filename using yt-dlp --get-filename.
-   * 
+   *
    * @param profile The download profile.
    * @returns The generated filename or an error message.
    */
   async generatePreview(profile: DownloadProfile): Promise<string> {
     const args = this.argumentBuilder.build(profile);
-    
+
     // Add --get-filename to get the output filename without downloading
     args.push('--get-filename');
 
@@ -34,16 +35,20 @@ export class FilenamePreview {
 
   /**
    * Renders the preview to the console.
-   * 
+   *
    * @param profile The download profile.
+   * @returns The generated filename.
    */
-  async render(profile: DownloadProfile): Promise<void> {
-    console.log('Generating filename preview...');
+  async render(profile: DownloadProfile): Promise<string> {
+    const spinner = ora('Generating filename preview...').start();
     const filename = await this.generatePreview(profile);
-    
+    spinner.stop();
+
     console.log('\nPreview Results:');
-    console.log(`- Download Directory: ${profile.outputDirectory}`);
-    console.log(`- Filename Template: ${profile.filenameTemplate}`);
-    console.log(`- Predicted Output: ${filename}`);
+    console.log(`🗃️ Download Directory: ${profile.outputDirectory}`);
+    console.log(`📋️ Filename Template: ${profile.filenameTemplate}`);
+    console.log(`📂 Predicted Output: ${filename}`);
+
+    return filename;
   }
 }

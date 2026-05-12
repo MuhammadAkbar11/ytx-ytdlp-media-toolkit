@@ -29,6 +29,7 @@ async function main() {
     services.mp4Workflow,
     services.mp3Workflow,
     services.subtitleWorkflow,
+    services.filenamePreview,
     services.eventStream,
     services.profileBuilder,
     services.configService,

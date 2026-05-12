@@ -3,6 +3,7 @@ import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from '../../core/workflows/mp3-download-workflow';
 import { SubtitleWorkflow } from '../../core/workflows/subtitle-workflow';
+import { FilenamePreview } from '../renderers/filename-preview';
 import { DryRunWorkflow } from '../../core/workflows/dry-run-workflow';
 import { EventStream } from '../../core/runtime/event-stream';
 import { TerminalRenderer } from '../renderers/terminal-renderer';
@@ -36,6 +37,7 @@ export class DownloadCommand {
     private mp4Workflow: Mp4DownloadWorkflow,
     private mp3Workflow: Mp3DownloadWorkflow,
     private subtitleWorkflow: SubtitleWorkflow,
+    private filenamePreview: FilenamePreview,
     private eventStream: EventStream,
     private profileBuilder: ProfileBuilder,
     private configService: ConfigService,
@@ -43,7 +45,10 @@ export class DownloadCommand {
     private dryRunWorkflow: DryRunWorkflow
   ) {}
 
-  async execute(initialUrl?: string, options: DownloadOptions = {}): Promise<void> {
+  async execute(
+    initialUrl?: string,
+    options: DownloadOptions = {}
+  ): Promise<void> {
     const renderer = new TerminalRenderer(this.eventStream);
     renderer.start();
 
@@ -91,11 +96,13 @@ export class DownloadCommand {
         value: 'custom',
       });
 
-      const selectedPresetId = options.preset || await select<string>({
-        message: 'Select a download preset:',
-        choices: presetChoices,
-        default: appConfig.defaultPreset || 'custom',
-      });
+      const selectedPresetId =
+        options.preset ||
+        (await select<string>({
+          message: 'Select a download preset:',
+          choices: presetChoices,
+          default: appConfig.defaultPreset || 'custom',
+        }));
 
       if (options.dryRun) {
         console.log(chalk.blue('ℹ Dry run enabled. Previewing execution...'));
@@ -226,21 +233,25 @@ export class DownloadCommand {
           }
 
           if (wantSubtitles === 'yes') {
-            const subtitleLang = (options.subLang as 'english' | 'all') || await select<'english' | 'all'>({
-              message: 'Select subtitle language:',
-              choices: [
-                { name: 'English', value: 'english' },
-                { name: 'All available', value: 'all' },
-              ],
-            });
+            const subtitleLang =
+              (options.subLang as 'english' | 'all') ||
+              (await select<'english' | 'all'>({
+                message: 'Select subtitle language:',
+                choices: [
+                  { name: 'English', value: 'english' },
+                  { name: 'All available', value: 'all' },
+                ],
+              }));
 
-            const subtitleOutput = (options.subMode as 'embed' | 'separate') || await select<'embed' | 'separate'>({
-              message: 'Subtitle output format:',
-              choices: [
-                { name: 'Embed into video', value: 'embed' },
-                { name: 'Separate file', value: 'separate' },
-              ],
-            });
+            const subtitleOutput =
+              (options.subMode as 'embed' | 'separate') ||
+              (await select<'embed' | 'separate'>({
+                message: 'Subtitle output format:',
+                choices: [
+                  { name: 'Embed into video', value: 'embed' },
+                  { name: 'Separate file', value: 'separate' },
+                ],
+              }));
 
             overrides.subtitleOptions = {
               mode: subtitleLang,
@@ -267,6 +278,9 @@ export class DownloadCommand {
         );
       }
 
+      // 4.5 Filename Preview
+      const resolvedFilename = await this.filenamePreview.render(profile);
+
       // 5. Execute workflow
       if (profile.mediaKind === 'video') {
         let res;
@@ -283,20 +297,20 @@ export class DownloadCommand {
         }
 
         if (res.ok) {
-          console.log(
-            chalk.green(
-              `\n📂 File saved to directory: ${profile.outputDirectory}`
-            )
-          );
+          const saveMessage = resolvedFilename.startsWith('Error:')
+            ? `\n📂 File saved to directory: ${profile.outputDirectory}`
+            : `\n📂 File saved to: ${resolvedFilename}`;
+            
+          console.log(chalk.green(saveMessage));
         }
       } else {
         const res = await this.mp3Workflow.run(profile);
         if (res.ok) {
-          console.log(
-            chalk.green(
-              `\n📂 File saved to directory: ${profile.outputDirectory}`
-            )
-          );
+          const saveMessage = resolvedFilename.startsWith('Error:')
+            ? `\n📂 File saved to directory: ${profile.outputDirectory}`
+            : `\n📂 File saved to: ${resolvedFilename}`;
+            
+          console.log(chalk.green(saveMessage));
         }
       }
     } catch (e) {

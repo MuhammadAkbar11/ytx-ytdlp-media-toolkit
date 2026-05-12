@@ -12,6 +12,7 @@ import { SubtitleWorkflow } from './core/workflows/subtitle-workflow';
 import { DryRunWorkflow } from './core/workflows/dry-run-workflow';
 import { PresetRegistry } from './core/presets/preset-registry';
 import { FormatNormalizer } from './core/formats/format-normalizer';
+import { FilenamePreview } from './cli/renderers/filename-preview';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -30,6 +31,7 @@ export function bootstrap() {
   const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
   const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
   const dryRunWorkflow = new DryRunWorkflow(inspectionService, formatNormalizer, profileBuilder, profileValidator, presetRegistry, argumentBuilder);
+  const filenamePreview = new FilenamePreview(processRunner, argumentBuilder);
 
   return {
     logger,
@@ -43,5 +45,6 @@ export function bootstrap() {
     dryRunWorkflow,
     presetRegistry,
     profileBuilder,
+    filenamePreview,
   };
 }
