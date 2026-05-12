@@ -34,7 +34,8 @@ async function main() {
     services.profileBuilder,
     services.configService,
     services.presetRegistry,
-    services.dryRunWorkflow
+    services.dryRunWorkflow,
+    services.directoryValidator
   );
 
   const doctorCommand = new DoctorCommand(

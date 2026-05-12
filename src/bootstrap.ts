@@ -13,6 +13,7 @@ import { DryRunWorkflow } from './core/workflows/dry-run-workflow';
 import { PresetRegistry } from './core/presets/preset-registry';
 import { FormatNormalizer } from './core/formats/format-normalizer';
 import { FilenamePreview } from './cli/renderers/filename-preview';
+import { DirectoryValidator } from './core/filesystem/directory-validator';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -46,5 +47,6 @@ export function bootstrap() {
     presetRegistry,
     profileBuilder,
     filenamePreview,
+    directoryValidator: new DirectoryValidator(),
   };
 }

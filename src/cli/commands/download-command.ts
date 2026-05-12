@@ -11,6 +11,7 @@ import { validateUrl } from '../../core/validation/url-validator';
 import { ProfileBuilder } from '../../core/profiles/profile-builder';
 import { ConfigService } from '../../core/config/config.service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
+import { DirectoryValidator } from '../../core/filesystem/directory-validator';
 import chalk from 'chalk';
 import ora from 'ora';
 import {
@@ -42,7 +43,8 @@ export class DownloadCommand {
     private profileBuilder: ProfileBuilder,
     private configService: ConfigService,
     private presetRegistry: PresetRegistry,
-    private dryRunWorkflow: DryRunWorkflow
+    private dryRunWorkflow: DryRunWorkflow,
+    private directoryValidator: DirectoryValidator
   ) {}
 
   async execute(
@@ -83,6 +85,74 @@ export class DownloadCommand {
       console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
 
       const appConfig = this.configService.getAll();
+
+      // 2.5 Playlist Prompt
+      let globalOverrides: Partial<DownloadProfile> = {};
+      const valRes = validateUrl(url);
+      if (valRes.ok && valRes.value.type === 'playlist') {
+        const playlistMode = await select<
+          'entire_playlist' | 'first_video' | 'selected_items'
+        >({
+          message: 'Playlist detected. How do you want to proceed?',
+          choices: [
+            { name: 'Download entire playlist', value: 'entire_playlist' },
+            { name: 'Download first item only', value: 'first_video' },
+            { name: 'Specify items (e.g. 1,3,5-10)', value: 'selected_items' },
+          ],
+        });
+
+        let selectedItems: string | undefined;
+        if (playlistMode === 'selected_items') {
+          selectedItems = await input({
+            message: 'Enter items to download (e.g. 1,3,5-10):',
+            validate: (val) => val.trim().length > 0 || 'Cannot be empty',
+          });
+        }
+
+        globalOverrides.playlist = {
+          mode: playlistMode,
+          selectedItems,
+        };
+      }
+
+      // 2.6 Output Directory Prompt
+      let outputDirectory = options.output;
+
+      if (!outputDirectory) {
+        const useDefaultDir = await select<'yes' | 'no'>({
+          message: `Use default download directory? (${appConfig.outputDirectory})`,
+          choices: [
+            { name: 'Yes', value: 'yes' },
+            { name: 'No', value: 'no' },
+          ],
+        });
+
+        if (useDefaultDir === 'no') {
+          let valid = false;
+          while (!valid) {
+            outputDirectory = await input({
+              message: 'Enter custom output directory:',
+              validate: (val) => val.trim().length > 0 || 'Cannot be empty',
+            });
+            const dirValRes = await this.directoryValidator.validate(outputDirectory);
+            if (dirValRes.ok) {
+              valid = true;
+            } else {
+              console.log(chalk.yellow(`\n⚠ ${dirValRes.error.message}`));
+            }
+          }
+        } else {
+          outputDirectory = appConfig.outputDirectory;
+        }
+      } else {
+        // Validate provided output directory
+        const dirValRes = await this.directoryValidator.validate(outputDirectory);
+        if (!dirValRes.ok) {
+          console.log(chalk.red(`\n✘ Invalid output directory: ${dirValRes.error.message}`));
+          return;
+        }
+      }
+      globalOverrides.outputDirectory = outputDirectory;
 
       // 3. Prompt for Preset or Custom
       const presets = this.presetRegistry.getAllPresets();
@@ -195,9 +265,6 @@ export class DownloadCommand {
           browserCookies,
         };
 
-        if (options.output) {
-          overrides.outputDirectory = options.output;
-        }
 
         if (mediaKind === 'video') {
           let quality: VideoQuality;
@@ -317,6 +384,13 @@ export class DownloadCommand {
           undefined,
           overrides
         );
+      }
+
+      if (globalOverrides.playlist) {
+        profile.playlist = globalOverrides.playlist;
+      }
+      if (globalOverrides.outputDirectory) {
+        profile.outputDirectory = globalOverrides.outputDirectory;
       }
 
       // 4.5 Filename Preview
