@@ -1,6 +1,7 @@
 import { DownloadEvent, EventSubscriber } from '../../types/events';
 import { LineClassifier } from './line-classifier';
 import { ProgressEventGenerator } from './progress-event-generator';
+import { runtimeDiagnostics } from './diagnostics/runtime-diagnostics';
 
 export class EventStream {
   private subscribers: EventSubscriber[] = [];
@@ -24,6 +25,7 @@ export class EventStream {
    * @param event The event to emit.
    */
   emit(event: DownloadEvent): void {
+    runtimeDiagnostics.log('event', JSON.stringify(event));
     for (const subscriber of this.subscribers) {
       subscriber(event);
     }
@@ -36,6 +38,7 @@ export class EventStream {
    */
   processLine(line: string): void {
     const classified = this.classifier.classify(line);
+    runtimeDiagnostics.log('parsed', `Classified [${classified.type}] line: ${line}`);
 
     switch (classified.type) {
       case 'progress': {

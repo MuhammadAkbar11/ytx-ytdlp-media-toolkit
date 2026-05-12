@@ -2,6 +2,10 @@
 
 A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun and TypeScript.
 
+## Supported Platforms
+
+- **Linux**: This tool is officially supported and optimized for Linux environments.
+
 ## Features
 
 - **Interactive CLI**: Guided workflow with prompts and confirmations

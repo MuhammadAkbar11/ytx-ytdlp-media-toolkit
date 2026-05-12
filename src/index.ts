@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { bootstrap } from './bootstrap';
 import { DownloadCommand } from './cli/commands/download-command';
+import { runtimeDiagnostics } from './core/runtime/diagnostics/runtime-diagnostics';
 import { DoctorCommand } from './cli/commands/doctor-command';
 import { ConfigCommand } from './cli/commands/config-command';
 import { PresetCommand } from './cli/commands/preset-command';
@@ -8,12 +9,17 @@ import { processLifecycleManager } from './infrastructure/process/process-lifecy
 import chalk from 'chalk';
 
 async function main() {
+  if (process.argv.includes('--debug-runtime')) {
+    runtimeDiagnostics.enable();
+  }
+
   const program = new Command();
 
   program
     .name('ytx')
     .description('A CLI tool for downloading YouTube videos using yt-dlp')
-    .version('0.1.0');
+    .version('0.1.0')
+    .option('--debug-runtime', 'Enable deep runtime diagnostics');
 
   // Initialize services
   const services = bootstrap();

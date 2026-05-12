@@ -1,6 +1,7 @@
 import Bun from 'bun';
 import { StreamNormalizer } from '../../core/runtime/stream-normalizer';
 import { processLifecycleManager } from './process-lifecycle';
+import { runtimeDiagnostics } from '../../core/runtime/diagnostics/runtime-diagnostics';
 
 import { ProcessRunner } from './process-runner';
 import {
@@ -42,9 +43,12 @@ export class BunProcessRunner implements ProcessRunner {
           const chunk = decoder.decode(value, { stream: true });
           fullText += chunk;
           
+          runtimeDiagnostics.log('raw', chunk);
+          
           if (onLine) {
             const lines = normalizer.processChunk(chunk);
             for (const line of lines) {
+              runtimeDiagnostics.log('normalized', line);
               onLine(line);
             }
           }
