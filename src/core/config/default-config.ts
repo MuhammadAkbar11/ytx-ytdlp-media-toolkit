@@ -15,7 +15,7 @@ export const DEFAULT_CONFIG: AppConfig = {
     embedMetadata: true,
     embedChapters: true,
   },
-  useDownloadArchive: true,
+  useDownloadArchive: false,
   defaultPreset: 'balanced',
   preferredVideoQuality: undefined,
 };

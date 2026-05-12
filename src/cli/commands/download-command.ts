@@ -2,6 +2,7 @@ import { input, select } from '@inquirer/prompts';
 import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from '../../core/workflows/mp3-download-workflow';
+import { SubtitleWorkflow } from '../../core/workflows/subtitle-workflow';
 import { DryRunWorkflow } from '../../core/workflows/dry-run-workflow';
 import { EventStream } from '../../core/runtime/event-stream';
 import { TerminalRenderer } from '../renderers/terminal-renderer';
@@ -23,6 +24,7 @@ export class DownloadCommand {
     private inspectionService: InspectionService,
     private mp4Workflow: Mp4DownloadWorkflow,
     private mp3Workflow: Mp3DownloadWorkflow,
+    private subtitleWorkflow: SubtitleWorkflow,
     private eventStream: EventStream,
     private profileBuilder: ProfileBuilder,
     private configService: ConfigService,
@@ -72,8 +74,11 @@ export class DownloadCommand {
         name: `${p.label} - ${p.description}`,
         value: p.id,
       }));
-      
-      presetChoices.unshift({ name: 'Custom (Configure manually)', value: 'custom' });
+
+      presetChoices.unshift({
+        name: 'Custom (Configure manually)',
+        value: 'custom',
+      });
 
       const selectedPresetId = await select<string>({
         message: 'Select a download preset:',
@@ -83,24 +88,34 @@ export class DownloadCommand {
 
       if (dryRun) {
         console.log(chalk.blue('ℹ Dry run enabled. Previewing execution...'));
-        const dryRunRes = await this.dryRunWorkflow.run(url, appConfig, selectedPresetId);
-        
+        const dryRunRes = await this.dryRunWorkflow.run(
+          url,
+          appConfig,
+          selectedPresetId
+        );
+
         if (!dryRunRes.ok) {
           console.log(chalk.red('✖ Dry run failed:'));
           dryRunRes.error.forEach((issue) => {
-            console.log(chalk.red(`  - [${issue.category}] ${issue.message} (${issue.field || 'general'})`));
+            console.log(
+              chalk.red(
+                `  - [${issue.category}] ${issue.message} (${issue.field || 'general'})`
+              )
+            );
           });
           return;
         }
 
         const res = dryRunRes.value;
-        console.log(chalk.green('\n✔ Dry Run Successful! Previewing resolved state:'));
+        console.log(
+          chalk.green('\n✔ Dry Run Successful! Previewing resolved state:')
+        );
         console.log(chalk.yellow('\n--- Resolved Profile ---'));
         console.log(JSON.stringify(res.profile, null, 2));
-        
+
         console.log(chalk.yellow('\n--- Resolved Arguments ---'));
         console.log(chalk.cyan(`yt-dlp ${res.arguments.join(' ')}`));
-        
+
         console.log(chalk.yellow('\n------------------------'));
         return;
       }
@@ -129,9 +144,17 @@ export class DownloadCommand {
           ],
         });
 
-        let browserCookies: 'chrome' | 'firefox' | 'edge' | 'brave' | 'safari' | null = null;
+        let browserCookies:
+          | 'chrome'
+          | 'firefox'
+          | 'edge'
+          | 'brave'
+          | 'safari'
+          | null = null;
         if (useCookies === 'yes') {
-          browserCookies = await select<'chrome' | 'firefox' | 'edge' | 'brave' | 'safari'>({
+          browserCookies = await select<
+            'chrome' | 'firefox' | 'edge' | 'brave' | 'safari'
+          >({
             message: 'Select browser:',
             choices: [
               { name: 'Brave', value: 'brave' },
@@ -158,6 +181,37 @@ export class DownloadCommand {
             ],
           });
           overrides.videoQuality = quality;
+
+          const wantSubtitles = await select<'yes' | 'no'>({
+            message: 'Download subtitles?',
+            choices: [
+              { name: 'No', value: 'no' },
+              { name: 'Yes', value: 'yes' },
+            ],
+          });
+
+          if (wantSubtitles === 'yes') {
+            const subtitleLang = await select<'english' | 'all'>({
+              message: 'Select subtitle language:',
+              choices: [
+                { name: 'English', value: 'english' },
+                { name: 'All available', value: 'all' },
+              ],
+            });
+
+            const subtitleOutput = await select<'embed' | 'separate'>({
+              message: 'Subtitle output format:',
+              choices: [
+                { name: 'Embed into video', value: 'embed' },
+                { name: 'Separate file', value: 'separate' },
+              ],
+            });
+
+            overrides.subtitleOptions = {
+              mode: subtitleLang,
+              output: subtitleOutput,
+            };
+          }
         } else {
           const bitrate = await select<AudioBitrate>({
             message: 'Select audio bitrate:',
@@ -170,19 +224,44 @@ export class DownloadCommand {
           overrides.audioOptions = { format: 'mp3', bitrate };
         }
 
-        profile = this.profileBuilder.build(url, appConfig, undefined, overrides);
+        profile = this.profileBuilder.build(
+          url,
+          appConfig,
+          undefined,
+          overrides
+        );
       }
 
       // 5. Execute workflow
       if (profile.mediaKind === 'video') {
-        const res = await this.mp4Workflow.run(profile);
+        let res;
+        if (
+          profile.subtitleOptions &&
+          profile.subtitleOptions.mode !== 'none'
+        ) {
+          console.log(
+            chalk.blue('ℹ Subtitles requested. Using SubtitleWorkflow...')
+          );
+          res = await this.subtitleWorkflow.run(profile);
+        } else {
+          res = await this.mp4Workflow.run(profile);
+        }
+
         if (res.ok) {
-          console.log(chalk.green(`\n📂 File saved to directory: ${profile.outputDirectory}`));
+          console.log(
+            chalk.green(
+              `\n📂 File saved to directory: ${profile.outputDirectory}`
+            )
+          );
         }
       } else {
         const res = await this.mp3Workflow.run(profile);
         if (res.ok) {
-          console.log(chalk.green(`\n📂 File saved to directory: ${profile.outputDirectory}`));
+          console.log(
+            chalk.green(
+              `\n📂 File saved to directory: ${profile.outputDirectory}`
+            )
+          );
         }
       }
     } catch (e) {

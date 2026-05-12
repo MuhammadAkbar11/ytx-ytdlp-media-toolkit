@@ -8,6 +8,7 @@ import { ProfileBuilder } from './core/profiles/profile-builder';
 import { EventStream } from './core/runtime/event-stream';
 import { Mp4DownloadWorkflow } from './core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from './core/workflows/mp3-download-workflow';
+import { SubtitleWorkflow } from './core/workflows/subtitle-workflow';
 import { DryRunWorkflow } from './core/workflows/dry-run-workflow';
 import { PresetRegistry } from './core/presets/preset-registry';
 import { FormatNormalizer } from './core/formats/format-normalizer';
@@ -27,6 +28,7 @@ export function bootstrap() {
 
   const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
   const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
+  const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
   const dryRunWorkflow = new DryRunWorkflow(inspectionService, formatNormalizer, profileBuilder, profileValidator, presetRegistry, argumentBuilder);
 
   return {
@@ -37,6 +39,7 @@ export function bootstrap() {
     eventStream,
     mp4Workflow,
     mp3Workflow,
+    subtitleWorkflow,
     dryRunWorkflow,
     presetRegistry,
     profileBuilder,
