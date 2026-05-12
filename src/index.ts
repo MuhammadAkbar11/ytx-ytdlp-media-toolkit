@@ -31,7 +31,8 @@ async function main() {
     services.eventStream,
     services.profileBuilder,
     services.configService,
-    services.presetRegistry
+    services.presetRegistry,
+    services.dryRunWorkflow
   );
 
   const doctorCommand = new DoctorCommand(
@@ -54,8 +55,9 @@ async function main() {
     .command('download')
     .description('Interactive download workflow')
     .argument('[url]', 'Optional YouTube URL to download')
-    .action(async (url) => {
-      await downloadCommand.execute(url);
+    .option('--dry-run', 'Preview the download without executing')
+    .action(async (url, options) => {
+      await downloadCommand.execute(url, options.dryRun);
     });
 
   // Doctor command

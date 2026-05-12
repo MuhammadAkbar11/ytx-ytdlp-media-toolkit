@@ -6,6 +6,7 @@ import { FormatNormalizer } from '../../src/core/formats/format-normalizer';
 import { ProfileBuilder } from '../../src/core/profiles/profile-builder';
 import { ProfileValidator } from '../../src/core/profiles/profile-validator';
 import { PresetRegistry } from '../../src/core/presets/preset-registry';
+import { ArgumentBuilder } from '../../src/core/downloader/argument-builder';
 import { AppConfig } from '../../src/types/config';
 import { ok } from '../../src/utils/result';
 
@@ -35,13 +36,15 @@ describe('DryRunWorkflow', () => {
     const profileBuilder = new ProfileBuilder();
     const profileValidator = new ProfileValidator();
     const presetRegistry = new PresetRegistry();
+    const argumentBuilder = new ArgumentBuilder();
 
     const workflow = new DryRunWorkflow(
       mockInspectionService,
       normalizer,
       profileBuilder,
       profileValidator,
-      presetRegistry
+      presetRegistry,
+      argumentBuilder
     );
 
     const config: AppConfig = {
@@ -68,6 +71,8 @@ describe('DryRunWorkflow', () => {
       expect(res.value.inspectionSummary.title).toBe('Test Video');
       expect(res.value.formats.length).toBe(1);
       expect(res.value.profile.url).toBe('https://youtube.com/watch?v=123');
+      expect(res.value.arguments).toBeDefined();
+      expect(res.value.arguments.length).toBeGreaterThan(0);
     }
   });
 

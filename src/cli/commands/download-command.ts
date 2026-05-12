@@ -2,6 +2,7 @@ import { input, select } from '@inquirer/prompts';
 import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from '../../core/workflows/mp3-download-workflow';
+import { DryRunWorkflow } from '../../core/workflows/dry-run-workflow';
 import { EventStream } from '../../core/runtime/event-stream';
 import { TerminalRenderer } from '../renderers/terminal-renderer';
 import { validateUrl } from '../../core/validation/url-validator';
@@ -25,10 +26,11 @@ export class DownloadCommand {
     private eventStream: EventStream,
     private profileBuilder: ProfileBuilder,
     private configService: ConfigService,
-    private presetRegistry: PresetRegistry
+    private presetRegistry: PresetRegistry,
+    private dryRunWorkflow: DryRunWorkflow
   ) {}
 
-  async execute(initialUrl?: string): Promise<void> {
+  async execute(initialUrl?: string, dryRun: boolean = false): Promise<void> {
     const renderer = new TerminalRenderer(this.eventStream);
     renderer.start();
 
@@ -78,6 +80,30 @@ export class DownloadCommand {
         choices: presetChoices,
         default: appConfig.defaultPreset || 'custom',
       });
+
+      if (dryRun) {
+        console.log(chalk.blue('ℹ Dry run enabled. Previewing execution...'));
+        const dryRunRes = await this.dryRunWorkflow.run(url, appConfig, selectedPresetId);
+        
+        if (!dryRunRes.ok) {
+          console.log(chalk.red('✖ Dry run failed:'));
+          dryRunRes.error.forEach((issue) => {
+            console.log(chalk.red(`  - [${issue.category}] ${issue.message} (${issue.field || 'general'})`));
+          });
+          return;
+        }
+
+        const res = dryRunRes.value;
+        console.log(chalk.green('\n✔ Dry Run Successful! Previewing resolved state:'));
+        console.log(chalk.yellow('\n--- Resolved Profile ---'));
+        console.log(JSON.stringify(res.profile, null, 2));
+        
+        console.log(chalk.yellow('\n--- Resolved Arguments ---'));
+        console.log(chalk.cyan(`yt-dlp ${res.arguments.join(' ')}`));
+        
+        console.log(chalk.yellow('\n------------------------'));
+        return;
+      }
 
       let profile: DownloadProfile;
 

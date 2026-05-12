@@ -12,3 +12,5 @@ dist/
 
 # Dev folder
 .dev/
+
+*archive.*

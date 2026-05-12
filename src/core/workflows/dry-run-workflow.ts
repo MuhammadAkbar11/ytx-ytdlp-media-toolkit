@@ -15,6 +15,7 @@ import {
   ValidationIssue,
 } from '../profiles/profile-validator';
 import { PresetRegistry } from '../presets/preset-registry';
+import { ArgumentBuilder } from '../downloader/argument-builder';
 
 export interface DryRunResult {
   url: ValidatedUrl;
@@ -25,6 +26,7 @@ export interface DryRunResult {
   formats: NormalizedFormat[];
   selectedPreset?: Preset;
   profile: DownloadProfile;
+  arguments: string[];
 }
 
 export class DryRunWorkflow {
@@ -33,7 +35,8 @@ export class DryRunWorkflow {
     private formatNormalizer: FormatNormalizer,
     private profileBuilder: ProfileBuilder,
     private profileValidator: ProfileValidator,
-    private presetRegistry: PresetRegistry
+    private presetRegistry: PresetRegistry,
+    private argumentBuilder: ArgumentBuilder
   ) {}
 
   /**
@@ -99,6 +102,8 @@ export class DryRunWorkflow {
     }
 
     // 7. Generate Preview Result
+    const args = this.argumentBuilder.build(profile);
+    
     const result: DryRunResult = {
       url: validatedUrl,
       inspectionSummary: {
@@ -108,6 +113,7 @@ export class DryRunWorkflow {
       formats,
       selectedPreset: preset,
       profile,
+      arguments: args,
     };
 
     return ok(result);
