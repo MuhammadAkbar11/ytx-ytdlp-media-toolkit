@@ -24,7 +24,17 @@ export class FilenamePreview {
     try {
       const result = await this.processRunner.run('yt-dlp', args);
       if (result.exitCode === 0) {
-        return result.stdout.trim();
+        let filename = result.stdout.trim();
+        
+        // Fix extension in preview because yt-dlp --get-filename returns the raw stream extension
+        if (profile.mediaKind === 'audio') {
+          const audioFormat = profile.audioOptions?.format || 'mp3';
+          filename = filename.replace(/\.[^/.]+$/, `.${audioFormat}`);
+        } else if (profile.mediaKind === 'video') {
+          filename = filename.replace(/\.[^/.]+$/, '.mp4');
+        }
+        
+        return filename;
       } else {
         return `Error: yt-dlp failed with exit code ${result.exitCode}`;
       }

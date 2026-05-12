@@ -21,6 +21,7 @@ export class ArgumentBuilder {
           `bestvideo[height<=${profile.videoQuality}]+bestaudio/best`
         );
       }
+      args.push('--merge-output-format', 'mp4');
     } else if (profile.mediaKind === 'audio') {
       args.push('--extract-audio');
 
