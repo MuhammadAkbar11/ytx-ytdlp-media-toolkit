@@ -270,6 +270,47 @@ export class DownloadCommand {
           overrides.audioOptions = { format: 'mp3', bitrate };
         }
 
+        const customEmbedMetadata = await select<false | true>({
+          message: 'Embed custom metadata?',
+          choices: [
+            { name: 'No', value: false },
+            { name: 'Yes', value: true },
+          ],
+          default: false,
+        });
+
+        if (customEmbedMetadata) {
+          const embedMetadata = await select<'yes' | 'no'>({
+            message: 'Embed metadata?',
+            choices: [
+              { name: 'Yes', value: 'yes' },
+              { name: 'No', value: 'no' },
+            ],
+          });
+
+          const embedThumbnail = await select<'yes' | 'no'>({
+            message: 'Embed thumbnail?',
+            choices: [
+              { name: 'Yes', value: 'yes' },
+              { name: 'No', value: 'no' },
+            ],
+          });
+
+          const embedChapters = await select<'yes' | 'no'>({
+            message: 'Embed chapters?',
+            choices: [
+              { name: 'Yes', value: 'yes' },
+              { name: 'No', value: 'no' },
+            ],
+          });
+
+          overrides.metadataOptions = {
+            embedMetadata: embedMetadata === 'yes',
+            embedThumbnail: embedThumbnail === 'yes',
+            embedChapters: embedChapters === 'yes',
+          };
+        }
+
         profile = this.profileBuilder.build(
           url,
           appConfig,
