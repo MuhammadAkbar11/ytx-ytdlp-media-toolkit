@@ -28,7 +28,10 @@ async function main() {
     services.inspectionService,
     services.mp4Workflow,
     services.mp3Workflow,
-    services.eventStream
+    services.eventStream,
+    services.profileBuilder,
+    services.configService,
+    services.presetRegistry
   );
 
   const doctorCommand = new DoctorCommand(

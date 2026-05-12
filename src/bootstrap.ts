@@ -4,6 +4,7 @@ import { BunProcessRunner } from './infrastructure/process/bun-process-runner';
 import { InspectionService } from './core/downloader/inspection.service';
 import { ArgumentBuilder } from './core/downloader/argument-builder';
 import { ProfileValidator } from './core/profiles/profile-validator';
+import { ProfileBuilder } from './core/profiles/profile-builder';
 import { EventStream } from './core/runtime/event-stream';
 import { Mp4DownloadWorkflow } from './core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from './core/workflows/mp3-download-workflow';
@@ -14,6 +15,7 @@ export function bootstrap() {
   const configService = new ConfigService();
   const processRunner = new BunProcessRunner();
   const presetRegistry = new PresetRegistry();
+  const profileBuilder = new ProfileBuilder();
   
   const inspectionService = new InspectionService(processRunner);
   const argumentBuilder = new ArgumentBuilder();
@@ -32,5 +34,6 @@ export function bootstrap() {
     mp4Workflow,
     mp3Workflow,
     presetRegistry,
+    profileBuilder,
   };
 }
