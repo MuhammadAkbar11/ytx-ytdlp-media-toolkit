@@ -19,6 +19,17 @@ import {
   VideoQuality,
 } from '../../types';
 
+export interface DownloadOptions {
+  dryRun?: boolean;
+  preset?: string;
+  audio?: boolean;
+  video?: boolean;
+  quality?: string;
+  subLang?: string;
+  subMode?: string;
+  output?: string;
+}
+
 export class DownloadCommand {
   constructor(
     private inspectionService: InspectionService,
@@ -32,7 +43,7 @@ export class DownloadCommand {
     private dryRunWorkflow: DryRunWorkflow
   ) {}
 
-  async execute(initialUrl?: string, dryRun: boolean = false): Promise<void> {
+  async execute(initialUrl?: string, options: DownloadOptions = {}): Promise<void> {
     const renderer = new TerminalRenderer(this.eventStream);
     renderer.start();
 
@@ -80,13 +91,13 @@ export class DownloadCommand {
         value: 'custom',
       });
 
-      const selectedPresetId = await select<string>({
+      const selectedPresetId = options.preset || await select<string>({
         message: 'Select a download preset:',
         choices: presetChoices,
         default: appConfig.defaultPreset || 'custom',
       });
 
-      if (dryRun) {
+      if (options.dryRun) {
         console.log(chalk.blue('ℹ Dry run enabled. Previewing execution...'));
         const dryRunRes = await this.dryRunWorkflow.run(
           url,
@@ -128,13 +139,20 @@ export class DownloadCommand {
         console.log(chalk.green(`✔ Using preset: ${preset?.label}`));
       } else {
         // Custom flow
-        const mediaKind = await select<MediaKind>({
-          message: 'Select format:',
-          choices: [
-            { name: 'Video (MP4)', value: 'video' },
-            { name: 'Audio (MP3)', value: 'audio' },
-          ],
-        });
+        let mediaKind: MediaKind;
+        if (options.audio) {
+          mediaKind = 'audio';
+        } else if (options.video) {
+          mediaKind = 'video';
+        } else {
+          mediaKind = await select<MediaKind>({
+            message: 'Select format:',
+            choices: [
+              { name: 'Video (MP4)', value: 'video' },
+              { name: 'Audio (MP3)', value: 'audio' },
+            ],
+          });
+        }
 
         const useCookies = await select<'yes' | 'no'>({
           message: 'Use cookies from browser (for restricted videos)?',
@@ -170,28 +188,45 @@ export class DownloadCommand {
           browserCookies,
         };
 
+        if (options.output) {
+          overrides.outputDirectory = options.output;
+        }
+
         if (mediaKind === 'video') {
-          const quality = await select<VideoQuality>({
-            message: 'Select quality:',
-            choices: [
-              { name: 'Best Available', value: 'best' },
-              { name: '1080p', value: 1080 },
-              { name: '720p', value: 720 },
-              { name: '480p', value: 480 },
-            ],
-          });
+          let quality: VideoQuality;
+          if (options.quality) {
+            quality = options.quality as VideoQuality;
+            if (options.quality !== 'best') {
+              quality = parseInt(options.quality, 10) as VideoQuality;
+            }
+          } else {
+            quality = await select<VideoQuality>({
+              message: 'Select quality:',
+              choices: [
+                { name: 'Best Available', value: 'best' },
+                { name: '1080p', value: 1080 },
+                { name: '720p', value: 720 },
+                { name: '480p', value: 480 },
+              ],
+            });
+          }
           overrides.videoQuality = quality;
 
-          const wantSubtitles = await select<'yes' | 'no'>({
-            message: 'Download subtitles?',
-            choices: [
-              { name: 'No', value: 'no' },
-              { name: 'Yes', value: 'yes' },
-            ],
-          });
+          let wantSubtitles: 'yes' | 'no';
+          if (options.subLang) {
+            wantSubtitles = 'yes';
+          } else {
+            wantSubtitles = await select<'yes' | 'no'>({
+              message: 'Download subtitles?',
+              choices: [
+                { name: 'No', value: 'no' },
+                { name: 'Yes', value: 'yes' },
+              ],
+            });
+          }
 
           if (wantSubtitles === 'yes') {
-            const subtitleLang = await select<'english' | 'all'>({
+            const subtitleLang = (options.subLang as 'english' | 'all') || await select<'english' | 'all'>({
               message: 'Select subtitle language:',
               choices: [
                 { name: 'English', value: 'english' },
@@ -199,7 +234,7 @@ export class DownloadCommand {
               ],
             });
 
-            const subtitleOutput = await select<'embed' | 'separate'>({
+            const subtitleOutput = (options.subMode as 'embed' | 'separate') || await select<'embed' | 'separate'>({
               message: 'Subtitle output format:',
               choices: [
                 { name: 'Embed into video', value: 'embed' },

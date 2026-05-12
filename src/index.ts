@@ -54,11 +54,18 @@ async function main() {
   // Download explicit command
   program
     .command('download')
-    .description('Interactive download workflow')
+    .description('Download workflow (interactive by default)')
     .argument('[url]', 'Optional YouTube URL to download')
     .option('--dry-run', 'Preview the download without executing')
+    .option('--preset <id>', 'Use a specific preset')
+    .option('--audio', 'Download audio only (MP3)')
+    .option('--video', 'Download video (MP4)')
+    .option('--quality <quality>', 'Preferred video quality (2160, 1440, 1080, 720, 480, best)')
+    .option('--sub-lang <lang>', 'Download subtitles (english, all)')
+    .option('--sub-mode <mode>', 'Subtitle mode (embed, separate)')
+    .option('--output <dir>', 'Output directory')
     .action(async (url, options) => {
-      await downloadCommand.execute(url, options.dryRun);
+      await downloadCommand.execute(url, options);
     });
 
   // Doctor command
