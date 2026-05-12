@@ -43,7 +43,7 @@ export class TerminalRenderer {
     switch (event.type) {
       case 'started':
         this.clearProgress();
-        console.log(chalk.green('🚀 Download started'));
+        console.log(chalk.blue('\n🚀 Download started'));
         this.spinner = ora(event.message || 'Starting download...').start();
         break;
       case 'completed':
@@ -51,13 +51,13 @@ export class TerminalRenderer {
           this.spinner.stop();
           this.spinner = null;
         }
-        
+
         // Ensure bar shows 100% before stopping
         if (this.progressBar) {
           this.progressBar.update(100);
         }
         this.clearProgress();
-        console.log(chalk.green('✔ Download completed successfully'));
+        console.log(chalk.green('✅️ Download completed successfully'));
         break;
       case 'failed':
         if (this.spinner) {
@@ -92,12 +92,12 @@ export class TerminalRenderer {
         }
 
         const percentage = event.progress.percentage ?? 0;
-        
+
         // Ignore progress updates that go backwards (e.g. when post-processing starts)
         if (percentage < this.currentPercentage) {
           break;
         }
-        
+
         this.currentPercentage = percentage;
 
         const speed = event.progress.speed ?? 'unknown';
@@ -108,7 +108,7 @@ export class TerminalRenderer {
         if (!this.progressBar) {
           this.progressBar = new cliProgress.SingleBar({
             format:
-              'Downloading |' +
+              '⏳️ Downloading |' +
               chalk.cyan('{bar}') +
               '| {percentage}% || Speed: {speed} || ETA: {eta} || Size: {totalSize}',
             barCompleteChar: '\u2588',
@@ -117,7 +117,7 @@ export class TerminalRenderer {
             clearOnComplete: false,
           });
         }
-        
+
         if (!this.hasStartedBar) {
           this.progressBar.start(100, percentage, this.currentPayload);
           this.hasStartedBar = true;

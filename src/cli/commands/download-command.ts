@@ -289,7 +289,7 @@ export class DownloadCommand {
           profile.subtitleOptions.mode !== 'none'
         ) {
           console.log(
-            chalk.blue('ℹ Subtitles requested. Using SubtitleWorkflow...')
+            chalk.blue('\nℹ️ Subtitles requested. Using SubtitleWorkflow...')
           );
           res = await this.subtitleWorkflow.run(profile);
         } else {
@@ -300,7 +300,7 @@ export class DownloadCommand {
           const saveMessage = resolvedFilename.startsWith('Error:')
             ? `\n📂 File saved to directory: ${profile.outputDirectory}`
             : `\n📂 File saved to: ${resolvedFilename}`;
-            
+
           console.log(chalk.green(saveMessage));
         }
       } else {
@@ -309,7 +309,7 @@ export class DownloadCommand {
           const saveMessage = resolvedFilename.startsWith('Error:')
             ? `\n📂 File saved to directory: ${profile.outputDirectory}`
             : `\n📂 File saved to: ${resolvedFilename}`;
-            
+
           console.log(chalk.green(saveMessage));
         }
       }
