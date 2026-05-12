@@ -36,6 +36,12 @@ export class ProfileBuilder {
       outputDirectory: config.outputDirectory,
       filenameTemplate: config.filenameTemplate,
       browserCookies: config.preferredBrowser,
+      videoQuality: config.preferredVideoQuality,
+      audioOptions: {
+        format: 'mp3',
+        bitrate: config.preferredBitrate,
+      },
+      useDownloadArchive: config.useDownloadArchive,
       subtitleOptions: {
         mode: config.subtitleOptions.mode,
         output: config.subtitleOptions.output,
@@ -56,6 +62,16 @@ export class ProfileBuilder {
       ...overrides,
       url,
     } as DownloadProfile;
+
+    // Cleanup incompatible options based on mediaKind to satisfy validator
+    if (finalProfile.mediaKind === 'video') {
+      delete finalProfile.audioOptions;
+    } else if (finalProfile.mediaKind === 'audio') {
+      delete finalProfile.videoQuality;
+      if (finalProfile.subtitleOptions) {
+        finalProfile.subtitleOptions.mode = 'none';
+      }
+    }
 
     return finalProfile;
   }

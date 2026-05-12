@@ -62,6 +62,8 @@ export class DownloadCommand {
 
       console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
 
+      const appConfig = this.configService.getAll();
+
       // 3. Prompt for Preset or Custom
       const presets = this.presetRegistry.getAllPresets();
       const presetChoices = presets.map((p) => ({
@@ -74,10 +76,10 @@ export class DownloadCommand {
       const selectedPresetId = await select<string>({
         message: 'Select a download preset:',
         choices: presetChoices,
+        default: appConfig.defaultPreset || 'custom',
       });
 
       let profile: DownloadProfile;
-      const appConfig = this.configService.getAll();
 
       if (selectedPresetId !== 'custom') {
         const preset = this.presetRegistry.getPreset(selectedPresetId);
