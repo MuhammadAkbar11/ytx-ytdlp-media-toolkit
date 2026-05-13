@@ -14,6 +14,7 @@ import { PresetRegistry } from './core/presets/preset-registry';
 import { FormatNormalizer } from './core/formats/format-normalizer';
 import { FilenamePreview } from './cli/renderers/filename-preview';
 import { DirectoryValidator } from './core/filesystem/directory-validator';
+import { SessionInspectionCache } from './core/cache/session-inspection-cache';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -22,8 +23,9 @@ export function bootstrap() {
   const presetRegistry = new PresetRegistry();
   const profileBuilder = new ProfileBuilder();
   const formatNormalizer = new FormatNormalizer();
+  const sessionInspectionCache = new SessionInspectionCache();
   
-  const inspectionService = new InspectionService(processRunner);
+  const inspectionService = new InspectionService(processRunner, sessionInspectionCache);
   const argumentBuilder = new ArgumentBuilder();
   const profileValidator = new ProfileValidator();
   const eventStream = new EventStream();
