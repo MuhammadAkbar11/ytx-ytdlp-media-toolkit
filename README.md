@@ -31,10 +31,15 @@ A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun an
 
 ## Installation
 
-To install `ytx` globally, run:
+Please refer to the [Linux Installation and Runtime Setup Guide](docs/installation.md) for detailed instructions on how to install `ytx` and its dependencies on various Linux distributions.
+
+For a quick setup from the repository:
 
 ```bash
-bun install -g ytx
+git clone https://github.com/your-repo/ytx.git
+cd ytx
+bun install
+bun link
 ```
 
 ## Usage
