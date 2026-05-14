@@ -151,7 +151,7 @@ export class DownloadCommand {
             if (dirValRes.ok) {
               valid = true;
             } else {
-              console.log(chalk.yellow(`\n⚠ ${dirValRes.error.message}`));
+              console.log(chalk.yellow(`\n⚠️ ${dirValRes.error.message}`));
             }
           }
         } else {
@@ -470,7 +470,7 @@ export class DownloadCommand {
       }
     } catch (e) {
       if (e instanceof Error && e.name === 'ExitPromptError') {
-        console.log(chalk.yellow('\n⚠ Operation aborted by user.'));
+        console.log(chalk.yellow('\n⚠️ Operation aborted by user.'));
       } else {
         console.log(
           chalk.red(

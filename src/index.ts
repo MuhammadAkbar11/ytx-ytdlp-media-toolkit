@@ -151,7 +151,7 @@ async function main() {
     });
 
   process.on('SIGINT', () => {
-    console.log(chalk.yellow('\n\n⚠ Interrupted by user. Cleaning up...'));
+    console.log(chalk.yellow('\n\n⚠️ Interrupted by user. Cleaning up...'));
     processLifecycleManager.killAll();
     process.exit(0);
   });

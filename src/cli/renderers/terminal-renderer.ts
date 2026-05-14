@@ -4,6 +4,7 @@ import { DownloadEvent } from '../../types/events';
 import chalk from 'chalk';
 import cliProgress from 'cli-progress';
 import ora from 'ora';
+import readline from 'readline';
 
 export class TerminalRenderer {
   private unsubscribe?: () => void;
@@ -69,7 +70,7 @@ export class TerminalRenderer {
         break;
       case 'warning':
         this.pauseProgressBar();
-        console.log(chalk.yellow(`⚠ Warning: ${event.message}`));
+        console.log(chalk.yellow(`⚠️ Warning: ${event.message}`));
         this.resumeProgressBar();
         break;
       case 'error':
@@ -131,6 +132,9 @@ export class TerminalRenderer {
 
   private pauseProgressBar(): void {
     if (this.progressBar) {
+      // Clear the current line to avoid ghost bars when resuming
+      readline.clearLine(process.stdout, 0);
+      readline.cursorTo(process.stdout, 0);
       this.progressBar.stop();
     }
     if (this.spinner) {
