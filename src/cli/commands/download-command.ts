@@ -15,6 +15,8 @@ import { PresetRegistry } from '../../core/presets/preset-registry';
 import { DirectoryValidator } from '../../core/filesystem/directory-validator';
 import { DebugRenderer } from '../renderers/debug-renderer';
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
+import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
+import { BrowserName } from '../../types/common';
 import chalk from 'chalk';
 import ora from 'ora';
 import { gracefulShutdownManager } from '../../core/runtime/graceful-shutdown';
@@ -36,6 +38,7 @@ export interface DownloadOptions {
   output?: string;
   verbose?: boolean;
   aria2?: boolean;
+  browser?: string;
 }
 
 export class DownloadCommand {
@@ -87,26 +90,70 @@ export class DownloadCommand {
         }
       }
 
+      const appConfig = this.configService.getAll();
+
+      // 1.5 Browser Cookie Resolution
+      let browserCookies: BrowserName | null = (options.browser as BrowserName) || appConfig.preferredBrowser || null;
+
+      if (!browserCookies && !initialUrl) {
+        const useCookies = await select<'yes' | 'no'>({
+          message: 'Use cookies from browser (for restricted videos)?',
+          choices: [
+            { name: 'No', value: 'no' },
+            { name: 'Yes', value: 'yes' },
+          ],
+        });
+
+        if (useCookies === 'yes') {
+          browserCookies = await select<BrowserName>({
+            message: 'Select browser:',
+            choices: [
+              { name: 'Brave', value: 'brave' },
+              { name: 'Chrome', value: 'chrome' },
+              { name: 'Firefox', value: 'firefox' },
+              { name: 'Edge', value: 'edge' },
+              { name: 'Safari', value: 'safari' },
+            ],
+          });
+        }
+      }
+
+      const runtimeContextBuilder = new RuntimeContextBuilder();
+      runtimeContextBuilder.withBrowserCookies(browserCookies);
+      const runtimeContext = runtimeContextBuilder.build();
+
       // 2. Inspect the URL
       const spinner = ora('Inspecting URL...').start();
-      const inspectRes = await this.inspectionService.inspect(url);
+      const inspectRes = await this.inspectionService.inspect(url, runtimeContext);
       spinner.stop();
 
       if (!inspectRes.ok) {
         console.log(
           chalk.red(`✘ Inspection failed: ${inspectRes.error.message}`)
         );
+        const errLower = inspectRes.error.message.toLowerCase();
+        if (
+          errLower.includes('members') ||
+          errLower.includes('private') ||
+          errLower.includes('sign in') ||
+          errLower.includes('age') ||
+          errLower.includes('cookie')
+        ) {
+          console.log(chalk.yellow('\nThis content may require authentication.'));
+          console.log(chalk.yellow(`Try:\n  ytx download "${url}" --browser firefox\n`));
+        }
         return;
       }
 
       console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
 
-      const appConfig = this.configService.getAll();
-
       // 2.5 Playlist Prompt
       let globalOverrides: Partial<DownloadProfile> = {};
       if (options.aria2) {
         globalOverrides.useAria2 = true;
+      }
+      if (browserCookies) {
+        globalOverrides.browserCookies = browserCookies;
       }
       const valRes = validateUrl(url);
       if (valRes.ok && valRes.value.type === 'playlist') {
@@ -257,38 +304,8 @@ export class DownloadCommand {
           });
         }
 
-        const useCookies = await select<'yes' | 'no'>({
-          message: 'Use cookies from browser (for restricted videos)?',
-          choices: [
-            { name: 'No', value: 'no' },
-            { name: 'Yes', value: 'yes' },
-          ],
-        });
-
-        let browserCookies:
-          | 'chrome'
-          | 'firefox'
-          | 'edge'
-          | 'brave'
-          | 'safari'
-          | null = null;
-        if (useCookies === 'yes') {
-          browserCookies = await select<
-            'chrome' | 'firefox' | 'edge' | 'brave' | 'safari'
-          >({
-            message: 'Select browser:',
-            choices: [
-              { name: 'Brave', value: 'brave' },
-              { name: 'Chrome', value: 'chrome' },
-              { name: 'Firefox', value: 'firefox' },
-              { name: 'Edge', value: 'edge' },
-            ],
-          });
-        }
-
         const overrides: Partial<DownloadProfile> = {
           mediaKind,
-          browserCookies,
         };
 
         if (mediaKind === 'video') {
@@ -419,6 +436,9 @@ export class DownloadCommand {
       }
       if (globalOverrides.useAria2) {
         profile.useAria2 = globalOverrides.useAria2;
+      }
+      if (globalOverrides.browserCookies) {
+        profile.browserCookies = globalOverrides.browserCookies;
       }
 
       // Calculate estimated size

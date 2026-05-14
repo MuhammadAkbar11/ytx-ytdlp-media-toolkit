@@ -72,6 +72,7 @@ async function main() {
     .argument('[url]', 'Optional YouTube URL to download')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')
+    .option('--browser <browser>', 'Browser to use for cookies (chrome, firefox, edge, brave, safari)')
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });
@@ -94,6 +95,7 @@ async function main() {
     .option('--output <dir>', 'Output directory')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')
+    .option('--browser <browser>', 'Browser to use for cookies (chrome, firefox, edge, brave, safari)')
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });

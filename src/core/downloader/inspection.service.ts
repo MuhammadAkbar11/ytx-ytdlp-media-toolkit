@@ -4,6 +4,7 @@ import { AppError } from '../../types/errors';
 import { createAppError } from '../../utils/errors';
 import { YtDlpInfo } from '../../types/domain';
 import { SessionInspectionCache } from '../cache/session-inspection-cache';
+import { RuntimeContext } from '../runtime/runtime-context';
 
 export class InspectionService {
   constructor(
@@ -18,8 +19,8 @@ export class InspectionService {
    * @param url The validated URL to inspect.
    * @returns A Result containing the parsed YtDlpInfo or an AppError.
    */
-  async inspect(url: string): Promise<Result<YtDlpInfo, AppError>> {
-    const cachedData = this.cache.get(url);
+  async inspect(url: string, context?: RuntimeContext): Promise<Result<YtDlpInfo, AppError>> {
+    const cachedData = this.cache.get(url, context);
     if (cachedData) {
       return ok(cachedData);
     }
@@ -28,8 +29,13 @@ export class InspectionService {
       '--dump-single-json',
       '--no-warnings',
       '--skip-download',
-      url,
     ];
+
+    if (context?.browserCookies) {
+      args.push('--cookies-from-browser', context.browserCookies);
+    }
+
+    args.push(url);
 
     try {
       const result = await this.processRunner.run('yt-dlp', args);
@@ -46,7 +52,7 @@ export class InspectionService {
       }
 
       const data = JSON.parse(result.stdout) as YtDlpInfo;
-      this.cache.set(url, data);
+      this.cache.set(url, data, context);
       return ok(data);
     } catch (e) {
       return fail(
