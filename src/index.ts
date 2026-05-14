@@ -7,8 +7,8 @@ import { runtimeDiagnostics } from './core/runtime/diagnostics/runtime-diagnosti
 import { DoctorCommand } from './cli/commands/doctor-command';
 import { ConfigCommand } from './cli/commands/config-command';
 import { PresetCommand } from './cli/commands/preset-command';
-import { processLifecycleManager } from './infrastructure/process/process-lifecycle';
 import chalk from 'chalk';
+import { gracefulShutdownManager } from './core/runtime/graceful-shutdown';
 
 async function main() {
   if (process.argv.includes('--debug-runtime')) {
@@ -166,11 +166,14 @@ async function main() {
       presetCommand.use(id);
     });
 
-  process.on('SIGINT', () => {
-    console.log(chalk.yellow('\n\n⚠️ Interrupted by user. Cleaning up...'));
-    processLifecycleManager.killAll();
+  const shutdown = () => {
+    console.log(chalk.yellow('\n\n⚠️ Interrupted. Cleaning up...'));
+    gracefulShutdownManager.shutdown();
     process.exit(0);
-  });
+  };
+
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 
   try {
     await program.parseAsync(process.argv);

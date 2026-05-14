@@ -17,6 +17,7 @@ import { DebugRenderer } from '../renderers/debug-renderer';
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import chalk from 'chalk';
 import ora from 'ora';
+import { gracefulShutdownManager } from '../../core/runtime/graceful-shutdown';
 import {
   AudioBitrate,
   DownloadProfile,
@@ -57,6 +58,7 @@ export class DownloadCommand {
   ): Promise<void> {
     const renderer = new TerminalRenderer(this.eventStream);
     renderer.start();
+    gracefulShutdownManager.registerCleanup(() => renderer.stop());
 
     let debugRenderer: any;
     if (options.verbose) {
@@ -65,6 +67,7 @@ export class DownloadCommand {
         debug: false,
       });
       debugRenderer.start();
+      gracefulShutdownManager.registerCleanup(() => debugRenderer.stop());
     }
 
     try {
