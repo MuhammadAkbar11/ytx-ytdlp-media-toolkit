@@ -36,7 +36,7 @@ export class ProfileBuilder {
       outputDirectory: config.outputDirectory,
       filenameTemplate: config.filenameTemplate,
       browserCookies: config.preferredBrowser,
-      videoQuality: config.preferredVideoQuality,
+      videoQuality: config.preferredVideoQuality ?? 'best',
       audioOptions: {
         format: 'mp3',
         bitrate: config.preferredBitrate,

@@ -2,6 +2,7 @@ import { Result, ok, fail } from '../../utils/result';
 import { AppError } from '../../types/errors';
 import { createAppError } from '../../utils/errors';
 import { UrlType, ValidatedUrl } from '../../types/domain';
+import { UrlNormalizer } from '../url/url-normalizer';
 
 /**
  * Validates and classifies a YouTube URL.
@@ -10,8 +11,11 @@ import { UrlType, ValidatedUrl } from '../../types/domain';
  * @returns A Result containing the ValidatedUrl or an AppError.
  */
 export function validateUrl(input: string): Result<ValidatedUrl, AppError> {
+  const normalizer = new UrlNormalizer();
+  const normalizedUrl = normalizer.normalize(input);
+
   try {
-    const url = new URL(input);
+    const url = new URL(normalizedUrl);
     const host = url.hostname.replace(/^www\./, ''); // Normalize host
 
     const supportedHosts = ['youtube.com', 'youtu.be', 'music.youtube.com'];
@@ -40,7 +44,7 @@ export function validateUrl(input: string): Result<ValidatedUrl, AppError> {
     }
 
     return ok({
-      normalizedUrl: input, // We can add normalization later if needed
+      normalizedUrl,
       type,
     });
   } catch (e) {

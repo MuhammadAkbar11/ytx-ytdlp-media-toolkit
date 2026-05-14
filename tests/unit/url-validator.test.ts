@@ -30,7 +30,7 @@ describe('URL Validator', () => {
     const res = validateUrl('https://youtube.com/shorts/123');
     expect(res.ok).toBe(true);
     if (res.ok) {
-      expect(res.value.type).toBe('short');
+      expect(res.value.type).toBe('video');
     }
   });
 
