@@ -29,7 +29,8 @@ export class BunProcessRunner implements ProcessRunner {
     // Helper to read stream line by line
     const readStream = async (
       stream: ReadableStream,
-      onLine?: (line: string) => void
+      onLine?: (line: string) => void,
+      bufferOutput = true
     ): Promise<string> => {
       let fullText = '';
       const normalizer = new StreamNormalizer();
@@ -41,7 +42,9 @@ export class BunProcessRunner implements ProcessRunner {
           if (done) break;
           
           const chunk = decoder.decode(value, { stream: true });
-          fullText += chunk;
+          if (bufferOutput) {
+            fullText += chunk;
+          }
           
           runtimeDiagnostics.log('raw', chunk);
           
@@ -68,8 +71,8 @@ export class BunProcessRunner implements ProcessRunner {
 
     try {
       const [stdout, stderr] = await Promise.all([
-        readStream(process.stdout, options?.onStdout),
-        readStream(process.stderr, options?.onStderr),
+        readStream(process.stdout, options?.onStdout, !options?.onStdout),
+        readStream(process.stderr, options?.onStderr, true),
       ]);
 
       const exitCode = await process.exited;
