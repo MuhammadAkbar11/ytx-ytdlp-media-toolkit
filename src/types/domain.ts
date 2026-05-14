@@ -37,6 +37,7 @@ export interface DownloadProfile {
   useDownloadArchive: boolean;
   archivePath?: string;
   estimatedSize?: number;
+  useAria2?: boolean;
 }
 
 export interface VideoFormat {

@@ -71,6 +71,7 @@ async function main() {
   program
     .argument('[url]', 'Optional YouTube URL to download')
     .option('-v, --verbose', 'Enable verbose output')
+    .option('--aria2', 'Use aria2 for multi-threaded downloads')
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });
@@ -92,6 +93,7 @@ async function main() {
     .option('--sub-mode <mode>', 'Subtitle mode (embed, separate)')
     .option('--output <dir>', 'Output directory')
     .option('-v, --verbose', 'Enable verbose output')
+    .option('--aria2', 'Use aria2 for multi-threaded downloads')
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });

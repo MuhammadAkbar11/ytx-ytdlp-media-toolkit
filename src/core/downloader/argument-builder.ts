@@ -81,6 +81,11 @@ export class ArgumentBuilder {
       args.push('--cookies-from-browser', profile.browserCookies);
     }
 
+    // 5.6 External Downloader
+    if (profile.useAria2) {
+      args.push('--downloader', 'aria2c');
+    }
+
     // 6. Output Template
     if (profile.outputDirectory && profile.filenameTemplate) {
       const template = path.join(

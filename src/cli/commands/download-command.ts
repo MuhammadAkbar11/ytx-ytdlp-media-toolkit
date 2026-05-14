@@ -35,6 +35,7 @@ export interface DownloadOptions {
   subMode?: string;
   output?: string;
   verbose?: boolean;
+  aria2?: boolean;
 }
 
 export class DownloadCommand {
@@ -104,6 +105,9 @@ export class DownloadCommand {
 
       // 2.5 Playlist Prompt
       let globalOverrides: Partial<DownloadProfile> = {};
+      if (options.aria2) {
+        globalOverrides.useAria2 = true;
+      }
       const valRes = validateUrl(url);
       if (valRes.ok && valRes.value.type === 'playlist') {
         const playlistMode = await select<
@@ -412,6 +416,9 @@ export class DownloadCommand {
       }
       if (globalOverrides.outputDirectory) {
         profile.outputDirectory = globalOverrides.outputDirectory;
+      }
+      if (globalOverrides.useAria2) {
+        profile.useAria2 = globalOverrides.useAria2;
       }
 
       // Calculate estimated size

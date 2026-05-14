@@ -82,4 +82,28 @@ describe('ArgumentBuilder', () => {
     expect(args).toContain('--cookies-from-browser');
     expect(args).toContain('chrome');
   });
+
+  test('should build arguments with aria2 downloader', () => {
+    const builder = new ArgumentBuilder();
+    const profile: DownloadProfile = {
+      url: 'https://youtube.com/watch?v=123',
+      mediaKind: 'video',
+      outputDirectory: '.',
+      filenameTemplate: '%(title)s.%(ext)s',
+      subtitleOptions: { mode: 'none', output: 'separate' },
+      metadataOptions: {
+        embedMetadata: false,
+        embedThumbnail: false,
+        embedChapters: false,
+      },
+      playlist: { mode: 'entire_playlist' },
+      useDownloadArchive: false,
+      useAria2: true,
+    };
+
+    const args = builder.build(profile);
+
+    expect(args).toContain('--downloader');
+    expect(args).toContain('aria2c');
+  });
 });
