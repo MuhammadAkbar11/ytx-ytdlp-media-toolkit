@@ -60,6 +60,9 @@ export class DebugRenderer {
         case 'progress':
           console.log(`[VERBOSE] [${timestamp}] Progress: ${event.progress.percentage}%`);
           break;
+        case 'debug':
+          console.log(`[VERBOSE] [${timestamp}] ${event.message}`);
+          break;
       }
     }
   }

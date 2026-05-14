@@ -49,8 +49,9 @@ async function main() {
   // Default command (interactive download)
   program
     .argument('[url]', 'Optional YouTube URL to download')
-    .action(async (url) => {
-      await downloadCommand.execute(url);
+    .option('-v, --verbose', 'Enable verbose output')
+    .action(async (url, options) => {
+      await downloadCommand.execute(url, options);
     });
 
   // Download explicit command
@@ -66,6 +67,7 @@ async function main() {
     .option('--sub-lang <lang>', 'Download subtitles (english, all)')
     .option('--sub-mode <mode>', 'Subtitle mode (embed, separate)')
     .option('--output <dir>', 'Output directory')
+    .option('-v, --verbose', 'Enable verbose output')
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });

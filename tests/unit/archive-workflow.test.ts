@@ -15,7 +15,9 @@ describe('ArchiveWorkflow', () => {
     const eventStream = new EventStream();
 
     const events: DownloadEvent[] = [];
-    eventStream.subscribe((e) => events.push(e));
+    eventStream.subscribe((e) => {
+      if (e.type !== 'debug') events.push(e);
+    });
 
     // Mock ProcessRunner that simulates output
     const mockProcessRunner = {

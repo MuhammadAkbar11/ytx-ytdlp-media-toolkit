@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { input, select } from '@inquirer/prompts';
 import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
@@ -12,6 +13,7 @@ import { ProfileBuilder } from '../../core/profiles/profile-builder';
 import { ConfigService } from '../../core/config/config.service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
 import { DirectoryValidator } from '../../core/filesystem/directory-validator';
+import { DebugRenderer } from '../renderers/debug-renderer';
 import chalk from 'chalk';
 import ora from 'ora';
 import {
@@ -30,6 +32,7 @@ export interface DownloadOptions {
   subLang?: string;
   subMode?: string;
   output?: string;
+  verbose?: boolean;
 }
 
 export class DownloadCommand {
@@ -53,6 +56,15 @@ export class DownloadCommand {
   ): Promise<void> {
     const renderer = new TerminalRenderer(this.eventStream);
     renderer.start();
+
+    let debugRenderer: any;
+    if (options.verbose) {
+      debugRenderer = new DebugRenderer(this.eventStream, {
+        verbose: true,
+        debug: false,
+      });
+      debugRenderer.start();
+    }
 
     try {
       // 1. Prompt for URL if not provided
@@ -134,7 +146,8 @@ export class DownloadCommand {
               message: 'Enter custom output directory:',
               validate: (val) => val.trim().length > 0 || 'Cannot be empty',
             });
-            const dirValRes = await this.directoryValidator.validate(outputDirectory);
+            const dirValRes =
+              await this.directoryValidator.validate(outputDirectory);
             if (dirValRes.ok) {
               valid = true;
             } else {
@@ -146,9 +159,14 @@ export class DownloadCommand {
         }
       } else {
         // Validate provided output directory
-        const dirValRes = await this.directoryValidator.validate(outputDirectory);
+        const dirValRes =
+          await this.directoryValidator.validate(outputDirectory);
         if (!dirValRes.ok) {
-          console.log(chalk.red(`\n✘ Invalid output directory: ${dirValRes.error.message}`));
+          console.log(
+            chalk.red(
+              `\n✘ Invalid output directory: ${dirValRes.error.message}`
+            )
+          );
           return;
         }
       }
@@ -264,7 +282,6 @@ export class DownloadCommand {
           mediaKind,
           browserCookies,
         };
-
 
         if (mediaKind === 'video') {
           let quality: VideoQuality;
@@ -393,6 +410,29 @@ export class DownloadCommand {
         profile.outputDirectory = globalOverrides.outputDirectory;
       }
 
+      if (options.verbose) {
+        this.eventStream.emit({
+          type: 'debug',
+          message: `preset: ${selectedPresetId}`,
+        });
+        this.eventStream.emit({
+          type: 'debug',
+          message: `output directory: ${profile.outputDirectory}`,
+        });
+        this.eventStream.emit({
+          type: 'debug',
+          message: `media kind: ${profile.mediaKind}`,
+        });
+        this.eventStream.emit({
+          type: 'debug',
+          message: `quality: ${profile.videoQuality || 'N/A'}`,
+        });
+        this.eventStream.emit({
+          type: 'debug',
+          message: `subtitles: ${profile.subtitleOptions?.mode || 'none'}`,
+        });
+      }
+
       // 4.5 Filename Preview
       const resolvedFilename = await this.filenamePreview.render(profile);
 
@@ -440,6 +480,9 @@ export class DownloadCommand {
       }
     } finally {
       renderer.stop();
+      if (debugRenderer) {
+        debugRenderer.stop();
+      }
     }
   }
 }

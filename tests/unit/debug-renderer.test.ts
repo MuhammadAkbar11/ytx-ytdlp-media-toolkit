@@ -56,14 +56,16 @@ describe('DebugRenderer', () => {
         totalSize: '10MB',
       },
     });
+    eventStream.emit({ type: 'debug', message: 'Test debug message' });
 
     renderer.stop();
     console.log = originalLog;
 
-    expect(logs.length).toBe(2);
+    expect(logs.length).toBe(3);
     expect(logs[0]).toContain('[VERBOSE]');
     expect(logs[0]).toContain('Download started');
     expect(logs[1]).toContain('Progress: 50%');
+    expect(logs[2]).toContain('Test debug message');
   });
 
   test('should render nothing when both are false', () => {

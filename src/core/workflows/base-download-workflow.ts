@@ -30,6 +30,10 @@ export class BaseDownloadWorkflow {
 
     // 2. Build Arguments
     const args = this.argumentBuilder.build(profile);
+    this.eventStream.emit({
+      type: 'debug',
+      message: `yt-dlp args: ${args.join(' ')}`,
+    });
 
     // 3. Emit started event
     this.eventStream.emit({ 
