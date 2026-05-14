@@ -23,8 +23,24 @@ async function main() {
     .version('0.1.0')
     .option('--debug-runtime', 'Enable deep runtime diagnostics');
 
-  // Initialize services
-  const services = bootstrap();
+  // Initialize services with error boundary
+  let services;
+  try {
+    services = bootstrap();
+  } catch (error) {
+    console.error(
+      chalk.red(`\n✘ Bootstrap Error: Failed to initialize application.`)
+    );
+    console.error(
+      chalk.red(
+        `Details: ${error instanceof Error ? error.message : String(error)}`
+      )
+    );
+    if (process.argv.includes('--debug-runtime') && error instanceof Error) {
+      console.error(chalk.red(`Stack: ${error.stack}`));
+    }
+    process.exit(1);
+  }
 
   const downloadCommand = new DownloadCommand(
     services.inspectionService,
@@ -164,11 +180,14 @@ async function main() {
         `\n✘ CLI Error: ${error instanceof Error ? error.message : String(error)}`
       )
     );
+    if (process.argv.includes('--debug-runtime') && error instanceof Error) {
+      console.error(chalk.red(`Stack: ${error.stack}`));
+    }
     process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error(chalk.red('Fatal error:'), err);
+  console.error(chalk.red('\n✘ Uncaught Fatal Error:'), err);
   process.exit(1);
 });
