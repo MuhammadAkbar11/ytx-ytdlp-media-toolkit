@@ -15,6 +15,8 @@ import { FormatNormalizer } from './core/formats/format-normalizer';
 import { FilenamePreview } from './cli/renderers/filename-preview';
 import { DirectoryValidator } from './core/filesystem/directory-validator';
 import { SessionInspectionCache } from './core/cache/session-inspection-cache';
+import { TransientFailureClassifier } from './core/runtime/transient-failure-classifier';
+import { RetryingProcessRunner } from './core/runtime/retrying-process-runner';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -24,17 +26,20 @@ export function bootstrap() {
   const profileBuilder = new ProfileBuilder();
   const formatNormalizer = new FormatNormalizer();
   const sessionInspectionCache = new SessionInspectionCache();
+  const eventStream = new EventStream();
   
-  const inspectionService = new InspectionService(processRunner, sessionInspectionCache);
+  const classifier = new TransientFailureClassifier();
+  const retryingProcessRunner = new RetryingProcessRunner(processRunner, classifier, eventStream);
+  
+  const inspectionService = new InspectionService(retryingProcessRunner, sessionInspectionCache);
   const argumentBuilder = new ArgumentBuilder();
   const profileValidator = new ProfileValidator();
-  const eventStream = new EventStream();
 
-  const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
-  const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
-  const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, processRunner, eventStream);
+  const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
+  const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
+  const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
   const dryRunWorkflow = new DryRunWorkflow(inspectionService, formatNormalizer, profileBuilder, profileValidator, presetRegistry, argumentBuilder);
-  const filenamePreview = new FilenamePreview(processRunner, argumentBuilder);
+  const filenamePreview = new FilenamePreview(retryingProcessRunner, argumentBuilder);
 
   return {
     logger,
