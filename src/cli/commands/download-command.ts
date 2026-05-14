@@ -14,6 +14,7 @@ import { ConfigService } from '../../core/config/config.service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
 import { DirectoryValidator } from '../../core/filesystem/directory-validator';
 import { DebugRenderer } from '../renderers/debug-renderer';
+import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import chalk from 'chalk';
 import ora from 'ora';
 import {
@@ -408,6 +409,13 @@ export class DownloadCommand {
       }
       if (globalOverrides.outputDirectory) {
         profile.outputDirectory = globalOverrides.outputDirectory;
+      }
+
+      // Calculate estimated size
+      const estimator = new ArtifactSizeEstimator();
+      const estimatedSize = estimator.estimate(profile, inspectRes.value);
+      if (estimatedSize) {
+        profile.estimatedSize = estimatedSize;
       }
 
       if (options.verbose) {

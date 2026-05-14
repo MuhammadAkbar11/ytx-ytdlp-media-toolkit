@@ -13,6 +13,7 @@ export class TerminalRenderer {
   private currentPercentage = 0;
   private currentPayload: any = {};
   private spinner: any = null;
+  private estimatedSize: string | null = null;
 
   constructor(private eventStream: EventStream) {}
 
@@ -45,6 +46,7 @@ export class TerminalRenderer {
       case 'started':
         this.clearProgress();
         console.log(chalk.blue('\n🚀 Download started'));
+        this.estimatedSize = event.estimatedSize || null;
         this.spinner = ora(event.message || 'Starting download...').start();
         break;
       case 'completed':
@@ -107,15 +109,19 @@ export class TerminalRenderer {
         this.currentPayload = { speed, eta, totalSize };
 
         if (!this.progressBar) {
+          const sizeFormat = this.estimatedSize
+            ? `Stream Size (Est. Size): {totalSize} (${this.estimatedSize})`
+            : `Stream Size: {totalSize}`;
           this.progressBar = new cliProgress.SingleBar({
             format:
               '⏳️ Downloading |' +
               chalk.cyan('{bar}') +
-              '| {percentage}% || Speed: {speed} || ETA: {eta} || Size: {totalSize}',
+              `| {percentage}% || Speed: {speed} || ETA: {eta} || ${sizeFormat}`,
             barCompleteChar: '\u2588',
             barIncompleteChar: '\u2591',
             hideCursor: true,
             clearOnComplete: false,
+            barsize: 25,
           });
         }
 
@@ -162,5 +168,6 @@ export class TerminalRenderer {
       this.currentPercentage = 0;
       this.currentPayload = {};
     }
+    this.estimatedSize = null;
   }
 }

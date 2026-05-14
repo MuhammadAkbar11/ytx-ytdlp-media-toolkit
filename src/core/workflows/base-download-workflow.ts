@@ -5,6 +5,7 @@ import { ArgumentBuilder } from '../downloader/argument-builder';
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { ProcessExecutionResult } from '../../types/process';
 import { EventStream } from '../runtime/event-stream';
+import { ArtifactSizeEstimator } from '../runtime/artifact-size-estimator';
 
 export class BaseDownloadWorkflow {
   constructor(
@@ -36,9 +37,11 @@ export class BaseDownloadWorkflow {
     });
 
     // 3. Emit started event
+    const estimator = new ArtifactSizeEstimator();
     this.eventStream.emit({ 
       type: 'started',
-      message: profile.browserCookies ? 'Fetching browser cookies...' : 'Starting download...'
+      message: profile.browserCookies ? 'Fetching browser cookies...' : 'Starting download...',
+      estimatedSize: profile.estimatedSize ? estimator.formatSize(profile.estimatedSize) : undefined
     });
 
     // 4. Execute yt-dlp

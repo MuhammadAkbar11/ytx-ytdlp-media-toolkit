@@ -36,6 +36,7 @@ export interface DownloadProfile {
   playlist: PlaylistOptions;
   useDownloadArchive: boolean;
   archivePath?: string;
+  estimatedSize?: number;
 }
 
 export interface VideoFormat {

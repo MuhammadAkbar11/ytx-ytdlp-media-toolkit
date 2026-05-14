@@ -2,29 +2,96 @@
 
 A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun and TypeScript.
 
+## Table of Contents
+
+- [Features](#features)
+- [Installation](#installation)
+- [Usage](#usage)
+  - [Download Videos](#download-videos)
+  - [Manage Configuration](#manage-configuration)
+  - [Use Presets](#use-presets)
+  - [Run Diagnostics](#run-diagnostics)
+- [Supported Platforms](#supported-platforms)
+- [Prerequisites](#prerequisites)
+- [Development](#development)
+- [Testing](#testing)
+- [License](#license)
+
+## Features
+
+- **Interactive CLI**: Guided workflow with prompts and confirmations for a seamless user experience.
+- **Cookie Support**: Utilize browser cookies to download age-restricted or private videos.
+- **Profile Management**: Save and reuse your favorite download settings as profiles for quick access.
+- **Smart Configuration**: Automatically detects and suggests optimal format combinations for the best quality.
+- **Progress Tracking**: Real-time updates on download progress and status.
+- **Process Management**: Graceful handling of interrupted downloads, allowing for resume capabilities.
+- **Doctor Command**: Built-in health checks for dependencies, configuration, and download directories to ensure smooth operation.
+- **Flexible Download Options**: Support for various download scenarios including single videos, playlists, MP3 audio, MP4 video, and subtitles.
+- **Archiving**: Keep track of downloaded videos to prevent re-downloading.
+
+## Installation
+
+To install `ytx` globally, run:
+
+```bash
+bun install -g ytx
+```
+
+## Usage
+
+### Download Videos
+
+To download a video, simply run:
+
+```bash
+ytx download <URL>
+```
+
+The CLI will guide you through the available options.
+
+### Manage Configuration
+
+View and manage `ytx`'s configuration:
+
+```bash
+ytx config
+```
+
+### Use Presets
+
+Save and use custom download presets:
+
+```bash
+ytx preset
+```
+
+### Run Diagnostics
+
+Check your environment and dependencies:
+
+```bash
+ytx doctor
+```
+
 ## Supported Platforms
 
 - **Linux**: This tool is officially supported and optimized for Linux environments.
 
-## Features
-
-- **Interactive CLI**: Guided workflow with prompts and confirmations
-- **Cookie Support**: Use cookies from your browser for age-restricted or private videos
-- **Profile Management**: Save and reuse your favorite download settings
-- **Smart Configuration**: Auto-detects optimal format combinations
-- **Progress Tracking**: Real-time download progress and status
-- **Process Management**: Graceful handling of interrupted downloads
-- **Doctor Command**: Health checks for dependencies and configuration
-
 ## Prerequisites
 
-- [Bun](https://bun.sh/)
-- `yt-dlp` (must be available on PATH)
-- `ffmpeg` (must be available on PATH)
+Before using `ytx`, ensure you have the following installed and available in your system's PATH:
 
-## Getting Started
+- [Bun](https://bun.sh/): JavaScript runtime and package manager.
+- `yt-dlp`: Command-line program to download videos from YouTube and other video sites.
+- `ffmpeg`: A complete, cross-platform solution to record, convert and stream audio and video.
 
-1. Clone the repository
+## Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-repo/ytx.git
+   cd ytx
+   ```
 2. Install dependencies:
    ```bash
    bun install
@@ -34,23 +101,23 @@ A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun an
    bun run dev
    ```
 
-## Scripts
-
-- `bun run dev`: Run the application from source.
-- `bun run build`: Compile TypeScript to JavaScript.
-- `bun run start`: Run the compiled application.
-- `bun test`: Run tests using Bun's test runner.
-- `bun test --watch`: Run tests in watch mode.
-
 ## Testing
 
 The project uses Bun's built-in test runner. Tests are organized into:
+
 - `tests/unit/`: For unit tests of pure logic.
 - `tests/integration/`: For tests that interact with external systems or infrastructure.
 
 To run tests:
+
 ```bash
 bun test
+```
+
+To run tests in watch mode:
+
+```bash
+bun test --watch
 ```
 
 ## License
