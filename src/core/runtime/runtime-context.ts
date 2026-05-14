@@ -1,7 +1,17 @@
 import { BrowserName } from '../../types/common';
 
+export interface RuntimeCapabilities {
+  ytDlpAvailable: boolean;
+  ffmpegAvailable: boolean;
+  aria2Available: boolean;
+}
+
 export interface RuntimeContext {
   browserCookies?: BrowserName;
+}
+
+export interface PreparedRuntimeContext extends RuntimeContext {
+  capabilities: RuntimeCapabilities;
 }
 
 export class RuntimeContextBuilder {

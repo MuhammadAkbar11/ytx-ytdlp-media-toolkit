@@ -16,6 +16,7 @@ import { DirectoryValidator } from '../../core/filesystem/directory-validator';
 import { DebugRenderer } from '../renderers/debug-renderer';
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
+import { RuntimePreflightResolver } from '../../core/preflight/runtime-preflight-resolver';
 import { BrowserName } from '../../types/common';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -53,7 +54,8 @@ export class DownloadCommand {
     private configService: ConfigService,
     private presetRegistry: PresetRegistry,
     private dryRunWorkflow: DryRunWorkflow,
-    private directoryValidator: DirectoryValidator
+    private directoryValidator: DirectoryValidator,
+    private runtimePreflightResolver: RuntimePreflightResolver
   ) {}
 
   async execute(
@@ -121,6 +123,20 @@ export class DownloadCommand {
       const runtimeContextBuilder = new RuntimeContextBuilder();
       runtimeContextBuilder.withBrowserCookies(browserCookies);
       const runtimeContext = runtimeContextBuilder.build();
+
+      // 1.8 Runtime Preflight Resolution
+      const preflightSpinner = ora('Resolving runtime capabilities...').start();
+      const preparedContext = await this.runtimePreflightResolver.resolve(runtimeContext);
+      preflightSpinner.stop();
+
+      if (!preparedContext.capabilities.ytDlpAvailable) {
+        console.log(chalk.red('✘ yt-dlp is not available. Please install it and try again.'));
+        return;
+      }
+
+      if (preparedContext.capabilities.ffmpegAvailable === false) {
+        console.log(chalk.yellow('⚠️  ffmpeg not detected. Merging and post-processing may be unavailable.'));
+      }
 
       // 2. Inspect the URL
       const spinner = ora('Inspecting URL...').start();

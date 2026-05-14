@@ -53,7 +53,8 @@ async function main() {
     services.configService,
     services.presetRegistry,
     services.dryRunWorkflow,
-    services.directoryValidator
+    services.directoryValidator,
+    services.runtimePreflightResolver
   );
 
   const doctorCommand = new DoctorCommand(

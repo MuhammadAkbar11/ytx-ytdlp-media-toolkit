@@ -17,6 +17,7 @@ import { DirectoryValidator } from './core/filesystem/directory-validator';
 import { SessionInspectionCache } from './core/cache/session-inspection-cache';
 import { TransientFailureClassifier } from './core/runtime/transient-failure-classifier';
 import { RetryingProcessRunner } from './core/runtime/retrying-process-runner';
+import { RuntimePreflightResolver } from './core/preflight/runtime-preflight-resolver';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -34,6 +35,7 @@ export function bootstrap() {
   const inspectionService = new InspectionService(retryingProcessRunner, sessionInspectionCache);
   const argumentBuilder = new ArgumentBuilder();
   const profileValidator = new ProfileValidator();
+  const runtimePreflightResolver = new RuntimePreflightResolver(processRunner);
 
   const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
   const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
@@ -54,6 +56,7 @@ export function bootstrap() {
     presetRegistry,
     profileBuilder,
     filenamePreview,
+    runtimePreflightResolver,
     directoryValidator: new DirectoryValidator(),
   };
 }
