@@ -27,7 +27,11 @@ export class EventStream {
   emit(event: DownloadEvent): void {
     runtimeDiagnostics.log('event', JSON.stringify(event));
     for (const subscriber of this.subscribers) {
-      subscriber(event);
+      try {
+        subscriber(event);
+      } catch (error) {
+        runtimeDiagnostics.log('error', `Subscriber failure: ${error instanceof Error ? error.message : String(error)}`);
+      }
     }
   }
 

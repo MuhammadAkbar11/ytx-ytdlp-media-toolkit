@@ -63,4 +63,21 @@ describe('EventStream', () => {
 
     expect(events.length).toBe(0);
   });
+
+  test('should isolate subscriber failures', () => {
+    const stream = new EventStream();
+    const events: DownloadEvent[] = [];
+    
+    stream.subscribe(() => {
+      throw new Error('Subscriber failed');
+    });
+    
+    stream.subscribe((e) => events.push(e));
+
+    const line = 'WARNING: This is a warning';
+    stream.processLine(line);
+
+    expect(events.length).toBe(1);
+    expect(events[0].type).toBe('warning');
+  });
 });
