@@ -14,7 +14,11 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "bun test",
-    "test:watch": "bun test --watch"
+    "test:watch": "bun test --watch",
+    "xlink": "bun unlink && bun link"
+  },
+  "bin": {
+    "ytx": "./src/index.ts"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

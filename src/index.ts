@@ -1,3 +1,5 @@
+#!/usr/bin/env bun
+
 import { Command } from 'commander';
 import { bootstrap } from './bootstrap';
 import { DownloadCommand } from './cli/commands/download-command';
@@ -44,7 +46,10 @@ async function main() {
   );
 
   const configCommand = new ConfigCommand(services.configService);
-  const presetCommand = new PresetCommand(services.presetRegistry, services.configService);
+  const presetCommand = new PresetCommand(
+    services.presetRegistry,
+    services.configService
+  );
 
   // Default command (interactive download)
   program
@@ -63,7 +68,10 @@ async function main() {
     .option('--preset <id>', 'Use a specific preset')
     .option('--audio', 'Download audio only (MP3)')
     .option('--video', 'Download video (MP4)')
-    .option('--quality <quality>', 'Preferred video quality (2160, 1440, 1080, 720, 480, best)')
+    .option(
+      '--quality <quality>',
+      'Preferred video quality (2160, 1440, 1080, 720, 480, best)'
+    )
     .option('--sub-lang <lang>', 'Download subtitles (english, all)')
     .option('--sub-mode <mode>', 'Subtitle mode (embed, separate)')
     .option('--output <dir>', 'Output directory')
@@ -81,8 +89,10 @@ async function main() {
     });
 
   // Config commands
-  const configCmd = program.command('config').description('Manage configuration');
-  
+  const configCmd = program
+    .command('config')
+    .description('Manage configuration');
+
   configCmd
     .command('get')
     .description('Get a configuration value')
@@ -149,7 +159,11 @@ async function main() {
   try {
     await program.parseAsync(process.argv);
   } catch (error) {
-    console.error(chalk.red(`\n✘ CLI Error: ${error instanceof Error ? error.message : String(error)}`));
+    console.error(
+      chalk.red(
+        `\n✘ CLI Error: ${error instanceof Error ? error.message : String(error)}`
+      )
+    );
     process.exit(1);
   }
 }
