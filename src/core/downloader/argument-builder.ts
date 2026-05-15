@@ -1,5 +1,6 @@
 import { DownloadProfile } from '../../types/domain';
 import * as path from 'path';
+import { DownloaderStrategyResolver } from './downloader-strategy';
 
 export class ArgumentBuilder {
   /**
@@ -82,9 +83,9 @@ export class ArgumentBuilder {
     }
 
     // 5.6 External Downloader
-    if (profile.useAria2) {
-      args.push('--downloader', 'aria2c');
-    }
+    const strategyResolver = new DownloaderStrategyResolver();
+    const strategy = strategyResolver.resolve(profile);
+    args.push(...strategy.getArgs(profile));
 
     // 6. Output Template
     if (profile.outputDirectory && profile.filenameTemplate) {

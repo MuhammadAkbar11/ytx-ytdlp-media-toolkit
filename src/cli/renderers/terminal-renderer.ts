@@ -1,9 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { EventStream } from '../../core/runtime/event-stream';
 import { DownloadEvent } from '../../types/events';
 import chalk from 'chalk';
 import cliProgress from 'cli-progress';
-import ora from 'ora';
+import ora, { Ora } from 'ora';
 import readline from 'readline';
 
 export class TerminalRenderer {
@@ -11,8 +10,8 @@ export class TerminalRenderer {
   private progressBar: cliProgress.SingleBar | null = null;
   private hasStartedBar = false;
   private currentPercentage = 0;
-  private currentPayload: any = {};
-  private spinner: any = null;
+  private currentPayload: Record<string, string> = {};
+  private spinner: Ora | null = null;
   private estimatedSize: string | null = null;
 
   constructor(private eventStream: EventStream) {}
@@ -45,7 +44,7 @@ export class TerminalRenderer {
     switch (event.type) {
       case 'started':
         this.clearProgress();
-        console.log(chalk.blue('\n🚀 Download started'));
+        // console.log(chalk.blue('\n🚀 Download started'));
         this.estimatedSize = event.estimatedSize || null;
         this.spinner = ora(event.message || 'Starting download...').start();
         break;
@@ -60,7 +59,7 @@ export class TerminalRenderer {
           this.progressBar.update(100);
         }
         this.clearProgress();
-        console.log(chalk.green('✅️ Download completed successfully'));
+        console.log(chalk.green('✔ Download completed successfully'));
         break;
       case 'failed':
         if (this.spinner) {
@@ -72,7 +71,7 @@ export class TerminalRenderer {
         break;
       case 'warning':
         this.pauseProgressBar();
-        console.log(chalk.yellow(`⚠️ Warning: ${event.message}`));
+        console.log(chalk.yellow(`⚠︎ Warning: ${event.message}`));
         this.resumeProgressBar();
         break;
       case 'error':
@@ -83,14 +82,17 @@ export class TerminalRenderer {
       case 'item-started':
         this.pauseProgressBar();
         console.log(
-          chalk.blue(`ℹ Processing item ${event.itemIndex}/${event.totalItems}`)
+          chalk.blue(`➤ Processing item ${event.itemIndex}/${event.totalItems}`)
         );
         this.resumeProgressBar();
         break;
       case 'progress': {
         // Stop spinner when progress starts
         if (this.spinner) {
-          this.spinner.stop();
+          this.spinner.stopAndPersist({
+            symbol: '➤',
+            text: 'Download is Processing',
+          });
           this.spinner = null;
         }
 
@@ -114,7 +116,7 @@ export class TerminalRenderer {
             : `Stream Size: {totalSize}`;
           this.progressBar = new cliProgress.SingleBar({
             format:
-              '⏳️ Downloading |' +
+              '➤ Downloading |' +
               chalk.cyan('{bar}') +
               `| {percentage}% || Speed: {speed} || ETA: {eta} || ${sizeFormat}`,
             barCompleteChar: '\u2588',

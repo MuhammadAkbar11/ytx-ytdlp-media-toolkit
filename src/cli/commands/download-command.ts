@@ -95,9 +95,10 @@ export class DownloadCommand {
       const appConfig = this.configService.getAll();
 
       // 1.5 Browser Cookie Resolution
-      let browserCookies: BrowserName | null = (options.browser as BrowserName) || appConfig.preferredBrowser || null;
+      let browserCookies: BrowserName | null =
+        (options.browser as BrowserName) || appConfig.preferredBrowser || null;
 
-      if (!browserCookies && !initialUrl) {
+      if (!browserCookies) {
         const useCookies = await select<'yes' | 'no'>({
           message: 'Use cookies from browser (for restricted videos)?',
           choices: [
@@ -126,21 +127,33 @@ export class DownloadCommand {
 
       // 1.8 Runtime Preflight Resolution
       const preflightSpinner = ora('Resolving runtime capabilities...').start();
-      const preparedContext = await this.runtimePreflightResolver.resolve(runtimeContext);
+      const preparedContext =
+        await this.runtimePreflightResolver.resolve(runtimeContext);
       preflightSpinner.stop();
 
       if (!preparedContext.capabilities.ytDlpAvailable) {
-        console.log(chalk.red('✘ yt-dlp is not available. Please install it and try again.'));
+        console.log(
+          chalk.red(
+            '✘ yt-dlp is not available. Please install it and try again.'
+          )
+        );
         return;
       }
 
       if (preparedContext.capabilities.ffmpegAvailable === false) {
-        console.log(chalk.yellow('⚠️  ffmpeg not detected. Merging and post-processing may be unavailable.'));
+        console.log(
+          chalk.yellow(
+            '⚠️  ffmpeg not detected. Merging and post-processing may be unavailable.'
+          )
+        );
       }
 
       // 2. Inspect the URL
       const spinner = ora('Inspecting URL...').start();
-      const inspectRes = await this.inspectionService.inspect(url, runtimeContext);
+      const inspectRes = await this.inspectionService.inspect(
+        url,
+        runtimeContext
+      );
       spinner.stop();
 
       if (!inspectRes.ok) {
@@ -155,8 +168,12 @@ export class DownloadCommand {
           errLower.includes('age') ||
           errLower.includes('cookie')
         ) {
-          console.log(chalk.yellow('\nThis content may require authentication.'));
-          console.log(chalk.yellow(`Try:\n  ytx download "${url}" --browser firefox\n`));
+          console.log(
+            chalk.yellow('\nThis content may require authentication.')
+          );
+          console.log(
+            chalk.yellow(`Try:\n  ytx download "${url}" --browser firefox\n`)
+          );
         }
         return;
       }
@@ -222,7 +239,7 @@ export class DownloadCommand {
             if (dirValRes.ok) {
               valid = true;
             } else {
-              console.log(chalk.yellow(`\n⚠️ ${dirValRes.error.message}`));
+              console.log(chalk.yellow(`\n⚠︎ ${dirValRes.error.message}`));
             }
           }
         } else {
@@ -264,7 +281,7 @@ export class DownloadCommand {
         }));
 
       if (options.dryRun) {
-        console.log(chalk.blue('ℹ Dry run enabled. Previewing execution...'));
+        console.log(chalk.blue('ⓘ Dry run enabled. Previewing execution...'));
         const dryRunRes = await this.dryRunWorkflow.run(
           url,
           appConfig,
@@ -272,7 +289,7 @@ export class DownloadCommand {
         );
 
         if (!dryRunRes.ok) {
-          console.log(chalk.red('✖ Dry run failed:'));
+          console.log(chalk.red('✘ Dry run failed:'));
           dryRunRes.error.forEach((issue) => {
             console.log(
               chalk.red(
@@ -490,6 +507,7 @@ export class DownloadCommand {
       // 4.5 Filename Preview
       const resolvedFilename = await this.filenamePreview.render(profile);
 
+      const checkSymbol = chalk.green('✔');
       // 5. Execute workflow
       if (profile.mediaKind === 'video') {
         let res;
@@ -498,7 +516,7 @@ export class DownloadCommand {
           profile.subtitleOptions.mode !== 'none'
         ) {
           console.log(
-            chalk.blue('\nℹ️ Subtitles requested. Using SubtitleWorkflow...')
+            chalk.blue('\nⓘ Subtitles requested. Using SubtitleWorkflow...')
           );
           res = await this.subtitleWorkflow.run(profile);
         } else {
@@ -507,8 +525,8 @@ export class DownloadCommand {
 
         if (res.ok) {
           const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `\n📂 File saved to directory: ${profile.outputDirectory}`
-            : `\n📂 File saved to: ${resolvedFilename}`;
+            ? `\n${checkSymbol} File saved to directory: ${profile.outputDirectory}`
+            : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
 
           console.log(chalk.green(saveMessage));
         }
@@ -516,8 +534,8 @@ export class DownloadCommand {
         const res = await this.mp3Workflow.run(profile);
         if (res.ok) {
           const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `\n📂 File saved to directory: ${profile.outputDirectory}`
-            : `\n📂 File saved to: ${resolvedFilename}`;
+            ? `\n${checkSymbol} File saved to directory: ${profile.outputDirectory}`
+            : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
 
           console.log(chalk.green(saveMessage));
         }
