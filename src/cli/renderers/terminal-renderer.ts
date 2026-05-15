@@ -44,7 +44,6 @@ export class TerminalRenderer {
     switch (event.type) {
       case 'started':
         this.clearProgress();
-        // console.log(chalk.blue('\n🚀 Download started'));
         this.estimatedSize = event.estimatedSize || null;
         this.spinner = ora(event.message || 'Starting download...').start();
         break;
@@ -82,7 +81,9 @@ export class TerminalRenderer {
       case 'item-started':
         this.pauseProgressBar();
         console.log(
-          chalk.blue(`➤ Processing item ${event.itemIndex}/${event.totalItems}`)
+          chalk.blue(
+            `\n➤ Processing item ${event.itemIndex}/${event.totalItems}`
+          )
         );
         this.resumeProgressBar();
         break;
@@ -112,8 +113,8 @@ export class TerminalRenderer {
 
         if (!this.progressBar) {
           const sizeFormat = this.estimatedSize
-            ? `Stream Size (Est. Size): {totalSize} (${this.estimatedSize})`
-            : `Stream Size: {totalSize}`;
+            ? `Download Size (Est. Size): {totalSize} (${this.estimatedSize})`
+            : `Download Size: {totalSize}`;
           this.progressBar = new cliProgress.SingleBar({
             format:
               '➤ Downloading |' +

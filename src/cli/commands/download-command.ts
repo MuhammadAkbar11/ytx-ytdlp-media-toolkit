@@ -39,7 +39,7 @@ export interface DownloadOptions {
   output?: string;
   verbose?: boolean;
   aria2?: boolean;
-  browser?: string;
+  browser?: string | boolean;
 }
 
 export class DownloadCommand {
@@ -95,30 +95,23 @@ export class DownloadCommand {
       const appConfig = this.configService.getAll();
 
       // 1.5 Browser Cookie Resolution
-      let browserCookies: BrowserName | null =
-        (options.browser as BrowserName) || appConfig.preferredBrowser || null;
+      let browserCookies: BrowserName | null = null;
 
-      if (!browserCookies) {
-        const useCookies = await select<'yes' | 'no'>({
-          message: 'Use cookies from browser (for restricted videos)?',
+      if (options.browser === true) {
+        browserCookies = await select<BrowserName>({
+          message: 'Select browser:',
           choices: [
-            { name: 'No', value: 'no' },
-            { name: 'Yes', value: 'yes' },
+            { name: 'Brave', value: 'brave' },
+            { name: 'Chrome', value: 'chrome' },
+            { name: 'Firefox', value: 'firefox' },
+            { name: 'Edge', value: 'edge' },
+            { name: 'Safari', value: 'safari' },
           ],
         });
-
-        if (useCookies === 'yes') {
-          browserCookies = await select<BrowserName>({
-            message: 'Select browser:',
-            choices: [
-              { name: 'Brave', value: 'brave' },
-              { name: 'Chrome', value: 'chrome' },
-              { name: 'Firefox', value: 'firefox' },
-              { name: 'Edge', value: 'edge' },
-              { name: 'Safari', value: 'safari' },
-            ],
-          });
-        }
+      } else if (typeof options.browser === 'string') {
+        browserCookies = options.browser as BrowserName;
+      } else if (appConfig.preferredBrowser) {
+        browserCookies = appConfig.preferredBrowser;
       }
 
       const runtimeContextBuilder = new RuntimeContextBuilder();

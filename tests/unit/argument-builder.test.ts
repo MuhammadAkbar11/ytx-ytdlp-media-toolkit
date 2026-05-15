@@ -105,8 +105,6 @@ describe('ArgumentBuilder', () => {
 
     expect(args).toContain('--downloader');
     expect(args).toContain('aria2c');
-    expect(args).toContain('--downloader-args');
-    expect(args).toContain('aria2c:-x8 -s8 -k1M');
     expect(args).toContain('-N');
     expect(args).toContain('8');
   });

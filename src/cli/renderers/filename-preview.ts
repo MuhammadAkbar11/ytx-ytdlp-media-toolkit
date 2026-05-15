@@ -2,6 +2,7 @@ import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { DownloadProfile } from '../../types/domain';
 import { ArgumentBuilder } from '../../core/downloader/argument-builder';
 import ora from 'ora';
+import chalk from 'chalk';
 
 export class FilenamePreview {
   constructor(
@@ -50,14 +51,19 @@ export class FilenamePreview {
    * @returns The generated filename.
    */
   async render(profile: DownloadProfile): Promise<string> {
+    console.log(`  `);
     const spinner = ora('Generating filename preview...').start();
     const filename = await this.generatePreview(profile);
-    spinner.stop();
+    spinner.stopAndPersist({
+      symbol: chalk.green('✔'),
+      text: 'Filename preview generated',
+    });
 
-    console.log('\nPreview Results:');
-    console.log(`➤ Download Directory: ${profile.outputDirectory}`);
-    console.log(`➤ Filename Template: ${profile.filenameTemplate}`);
-    console.log(`➤ Predicted Output: ${filename}`);
+    const symbol = chalk.blue('➤');
+    console.log(`${chalk.blue('❖')} Preview Results:`);
+    console.log(`${symbol} Download Directory: ${profile.outputDirectory}`);
+    console.log(`${symbol} Filename Template: ${profile.filenameTemplate}`);
+    console.log(`${symbol} Predicted Output: ${filename}\n`);
 
     return filename;
   }

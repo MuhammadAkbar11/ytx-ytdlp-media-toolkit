@@ -11,7 +11,10 @@ export class ArtifactSizeEstimator {
     }
 
     // MP3 transcoding estimation
-    if (profile.mediaKind === 'audio' && profile.audioOptions?.format === 'mp3') {
+    if (
+      profile.mediaKind === 'audio' &&
+      profile.audioOptions?.format === 'mp3'
+    ) {
       const bitrateKbps = profile.audioOptions.bitrate;
       const durationSeconds = info.duration;
 
@@ -23,25 +26,9 @@ export class ArtifactSizeEstimator {
       return ((bitrateKbps * 1000 * durationSeconds) / 8) * overheadFactor;
     }
 
-    // Video estimation using typical average combined bitrates (video + audio) per resolution
+    // Video estimation is disabled as it is unreliable for MP4 workflows
     if (profile.mediaKind === 'video') {
-      // Typical average bitrates in kbps for YouTube-sourced content (VP9/H.264 + AAC/Opus)
-      const bitrateMapKbps: Record<string, number> = {
-        '2160': 20000, // 4K: ~20 Mbps
-        '1440': 10000, // 2K: ~10 Mbps
-        '1080': 5000,  // 1080p: ~5 Mbps
-        '720': 2500,   // 720p: ~2.5 Mbps
-        '480': 1200,   // 480p: ~1.2 Mbps
-        'best': 6000,  // Assume ~1080p-ish for 'best'
-      };
-
-      const quality = String(profile.videoQuality ?? 'best');
-      const bitrateKbps = bitrateMapKbps[quality] ?? 5000;
-      const durationSeconds = info.duration;
-
-      // Add ~8% overhead for MKV/MP4 container, chapters, and subtitle tracks
-      const overheadFactor = 1.08;
-      return ((bitrateKbps * 1000 * durationSeconds) / 8) * overheadFactor;
+      return null;
     }
 
     return null;

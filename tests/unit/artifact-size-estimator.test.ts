@@ -58,7 +58,7 @@ describe('ArtifactSizeEstimator', () => {
     expect(estimatedSize).toBeNull();
   });
 
-  test('should estimate 1080p video size correctly', () => {
+  test('should return null for video workflows', () => {
     const estimator = new ArtifactSizeEstimator();
 
     const profile: DownloadProfile = {
@@ -80,39 +80,6 @@ describe('ArtifactSizeEstimator', () => {
     };
 
     const estimatedSize = estimator.estimate(profile, info);
-
-    // (5000 * 1000 * 100) / 8 * 1.08 = 67,500,000 bytes
-    expect(estimatedSize).toBe(67500000);
-
-    const formatted = estimator.formatSize(estimatedSize!);
-    // 67,500,000 / 1024 / 1024 = ~64.4 MiB
-    expect(formatted).toBe('~64.4 MiB');
-  });
-
-  test('should estimate 720p video size correctly', () => {
-    const estimator = new ArtifactSizeEstimator();
-
-    const profile: DownloadProfile = {
-      url: 'https://youtube.com/watch?v=123',
-      mediaKind: 'video',
-      outputDirectory: '.',
-      filenameTemplate: '%(title)s.%(ext)s',
-      videoQuality: 720,
-      subtitleOptions: { mode: 'none', output: 'separate' },
-      metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
-      playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
-    };
-
-    const info: YtDlpInfo = {
-      webpageUrl: 'https://youtube.com/watch?v=123',
-      isPlaylist: false,
-      duration: 100,
-    };
-
-    const estimatedSize = estimator.estimate(profile, info);
-
-    // (2500 * 1000 * 100) / 8 * 1.08 = 33,750,000 bytes
-    expect(estimatedSize).toBe(33750000);
+    expect(estimatedSize).toBeNull();
   });
 });

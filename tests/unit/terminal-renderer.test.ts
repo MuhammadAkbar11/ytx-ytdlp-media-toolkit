@@ -53,8 +53,7 @@ describe('TerminalRenderer', () => {
     renderer.stop();
     console.log = originalLog;
 
-    expect(logs.length).toBe(2);
-    expect(logs[0]).toContain('Download started');
-    expect(logs[1]).toContain('Download completed successfully');
+    expect(logs.length).toBe(1);
+    expect(logs[0]).toContain('Download completed successfully');
   });
 });
