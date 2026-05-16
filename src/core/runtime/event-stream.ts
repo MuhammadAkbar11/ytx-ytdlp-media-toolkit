@@ -30,7 +30,8 @@ export class EventStream {
       try {
         subscriber(event);
       } catch (error) {
-        runtimeDiagnostics.log('error', `Subscriber failure: ${error instanceof Error ? error.message : String(error)}`);
+        const errorMessage = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+        runtimeDiagnostics.log('error', `Subscriber failure: ${errorMessage}`);
       }
     }
   }

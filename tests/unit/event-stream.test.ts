@@ -80,4 +80,28 @@ describe('EventStream', () => {
     expect(events.length).toBe(1);
     expect(events[0].type).toBe('warning');
   });
+
+  test('should handle multiple subscriber failures and continue', () => {
+    const stream = new EventStream();
+    const events: DownloadEvent[] = [];
+    
+    stream.subscribe(() => {
+      throw new Error('Subscriber 1 failed');
+    });
+    
+    stream.subscribe((e) => events.push(e));
+    
+    stream.subscribe(() => {
+      throw new Error('Subscriber 3 failed');
+    });
+
+    stream.subscribe((e) => events.push(e));
+
+    const line = 'WARNING: This is a warning';
+    stream.processLine(line);
+
+    expect(events.length).toBe(2);
+    expect(events[0].type).toBe('warning');
+    expect(events[1].type).toBe('warning');
+  });
 });
