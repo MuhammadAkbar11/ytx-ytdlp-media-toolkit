@@ -3,6 +3,7 @@ import { DownloadProfile } from '../../types/domain';
 import { ArgumentBuilder } from '../../core/downloader/argument-builder';
 import ora from 'ora';
 import chalk from 'chalk';
+import { runtimeEnvironment } from '../../core/runtime/runtime-environment';
 
 export class FilenamePreview {
   constructor(
@@ -52,12 +53,18 @@ export class FilenamePreview {
    */
   async render(profile: DownloadProfile): Promise<string> {
     console.log(`  `);
-    const spinner = ora('Generating filename preview...').start();
+    const spinner = runtimeEnvironment.isInteractive
+      ? ora('Generating filename preview...').start()
+      : null;
     const filename = await this.generatePreview(profile);
-    spinner.stopAndPersist({
-      symbol: chalk.green('✔'),
-      text: 'Filename preview generated',
-    });
+    if (spinner) {
+      spinner.stopAndPersist({
+        symbol: chalk.green('✔'),
+        text: 'Filename preview generated',
+      });
+    } else {
+      console.log(chalk.blue('➤ Generating filename preview...'));
+    }
 
     const symbol = chalk.blue('➤');
     console.log(`${chalk.blue('❖')} Preview Results:`);

@@ -4,6 +4,7 @@ import chalk from 'chalk';
 import cliProgress from 'cli-progress';
 import ora, { Ora } from 'ora';
 import readline from 'readline';
+import { runtimeEnvironment } from '../../core/runtime/runtime-environment';
 
 export class TerminalRenderer {
   private unsubscribe?: () => void;
@@ -45,7 +46,11 @@ export class TerminalRenderer {
       case 'started':
         this.clearProgress();
         this.estimatedSize = event.estimatedSize || null;
-        this.spinner = ora(event.message || 'Starting download...').start();
+        if (runtimeEnvironment.isInteractive) {
+          this.spinner = ora(event.message || 'Starting download...').start();
+        } else {
+          console.log(chalk.blue(`➤ ${event.message || 'Starting download...'}`));
+        }
         break;
       case 'completed':
         if (this.spinner) {
@@ -90,11 +95,20 @@ export class TerminalRenderer {
       case 'progress': {
         // Stop spinner when progress starts
         if (this.spinner) {
-          this.spinner.stopAndPersist({
-            symbol: '➤',
-            text: 'Download is Processing',
-          });
+          if (runtimeEnvironment.isInteractive) {
+            this.spinner.stopAndPersist({
+              symbol: '➤',
+              text: 'Download is Processing',
+            });
+          }
           this.spinner = null;
+        }
+
+        if (!runtimeEnvironment.isInteractive) {
+          // In non-interactive mode, we might want to log progress occasionally, 
+          // but usually we just want to avoid the spam. 
+          // For now, let's just avoid the progress bar.
+          break;
         }
 
         const percentage = event.progress.percentage ?? 0;
@@ -140,10 +154,12 @@ export class TerminalRenderer {
   }
 
   private pauseProgressBar(): void {
-    if (this.progressBar) {
+    if (this.progressBar && runtimeEnvironment.isInteractive) {
       // Clear the current line to avoid ghost bars when resuming
-      readline.clearLine(process.stdout, 0);
-      readline.cursorTo(process.stdout, 0);
+      if (runtimeEnvironment.supportsCursorControl) {
+        readline.clearLine(process.stdout, 0);
+        readline.cursorTo(process.stdout, 0);
+      }
       this.progressBar.stop();
     }
     if (this.spinner) {

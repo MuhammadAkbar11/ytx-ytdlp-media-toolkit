@@ -21,6 +21,7 @@ import { BrowserName } from '../../types/common';
 import chalk from 'chalk';
 import ora from 'ora';
 import { gracefulShutdownManager } from '../../core/runtime/graceful-shutdown';
+import { runtimeEnvironment } from '../../core/runtime/runtime-environment';
 import {
   AudioBitrate,
   DownloadProfile,
@@ -80,6 +81,10 @@ export class DownloadCommand {
       // 1. Prompt for URL if not provided
       let url = initialUrl;
       if (!url) {
+        if (!runtimeEnvironment.isInteractive) {
+          console.log(chalk.red('✘ Error: URL is required in non-interactive mode.'));
+          return;
+        }
         url = await input({
           message: 'Enter YouTube URL:',
           validate: (val) => validateUrl(val).ok || 'Invalid URL',
@@ -98,16 +103,20 @@ export class DownloadCommand {
       let browserCookies: BrowserName | null = null;
 
       if (options.browser === true) {
-        browserCookies = await select<BrowserName>({
-          message: 'Select browser:',
-          choices: [
-            { name: 'Brave', value: 'brave' },
-            { name: 'Chrome', value: 'chrome' },
-            { name: 'Firefox', value: 'firefox' },
-            { name: 'Edge', value: 'edge' },
-            { name: 'Safari', value: 'safari' },
-          ],
-        });
+        if (!runtimeEnvironment.isInteractive) {
+          console.log(chalk.yellow('⚠ Warning: --browser flag without value ignored in non-interactive mode.'));
+        } else {
+          browserCookies = await select<BrowserName>({
+            message: 'Select browser:',
+            choices: [
+              { name: 'Brave', value: 'brave' },
+              { name: 'Chrome', value: 'chrome' },
+              { name: 'Firefox', value: 'firefox' },
+              { name: 'Edge', value: 'edge' },
+              { name: 'Safari', value: 'safari' },
+            ],
+          });
+        }
       } else if (typeof options.browser === 'string') {
         browserCookies = options.browser as BrowserName;
       } else if (appConfig.preferredBrowser) {
@@ -119,10 +128,15 @@ export class DownloadCommand {
       const runtimeContext = runtimeContextBuilder.build();
 
       // 1.8 Runtime Preflight Resolution
-      const preflightSpinner = ora('Resolving runtime capabilities...').start();
+      const preflightSpinner = runtimeEnvironment.isInteractive
+        ? ora('Resolving runtime capabilities...').start()
+        : null;
+      if (!runtimeEnvironment.isInteractive) {
+        console.log(chalk.blue('➤ Resolving runtime capabilities...'));
+      }
       const preparedContext =
         await this.runtimePreflightResolver.resolve(runtimeContext);
-      preflightSpinner.stop();
+      preflightSpinner?.stop();
 
       if (!preparedContext.capabilities.ytDlpAvailable) {
         console.log(
@@ -142,12 +156,17 @@ export class DownloadCommand {
       }
 
       // 2. Inspect the URL
-      const spinner = ora('Inspecting URL...').start();
+      const spinner = runtimeEnvironment.isInteractive
+        ? ora('Inspecting URL...').start()
+        : null;
+      if (!runtimeEnvironment.isInteractive) {
+        console.log(chalk.blue('➤ Inspecting URL...'));
+      }
       const inspectRes = await this.inspectionService.inspect(
         url,
         runtimeContext
       );
-      spinner.stop();
+      spinner?.stop();
 
       if (!inspectRes.ok) {
         console.log(
