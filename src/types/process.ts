@@ -3,6 +3,8 @@ export interface ProcessSpawnOptions {
   env?: Record<string, string>;
   onStdout?: (line: string) => void;
   onStderr?: (line: string) => void;
+  bufferStdout?: boolean;
+  bufferStderr?: boolean;
 }
 
 export interface ProcessExecutionResult {

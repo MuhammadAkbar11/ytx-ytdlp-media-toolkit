@@ -71,8 +71,16 @@ export class BunProcessRunner implements ProcessRunner {
 
     try {
       const [stdout, stderr] = await Promise.all([
-        readStream(process.stdout, options?.onStdout, !options?.onStdout),
-        readStream(process.stderr, options?.onStderr, true),
+        readStream(
+          process.stdout,
+          options?.onStdout,
+          options?.bufferStdout ?? !options?.onStdout
+        ),
+        readStream(
+          process.stderr,
+          options?.onStderr,
+          options?.bufferStderr ?? true
+        ),
       ]);
 
       const exitCode = await process.exited;

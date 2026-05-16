@@ -44,7 +44,10 @@ export class RuntimePreflightResolver {
 
   private async checkAvailable(command: string, args: string[]): Promise<boolean> {
     try {
-      const result = await this.processRunner.run(command, args);
+      const result = await this.processRunner.run(command, args, {
+        bufferStdout: false,
+        bufferStderr: false,
+      });
       return result.exitCode === 0;
     } catch {
       return false;

@@ -45,17 +45,23 @@ export class BaseDownloadWorkflow {
     });
 
     // 4. Execute yt-dlp
+    let lastError = '';
     try {
       const result = await this.processRunner.run('yt-dlp', args, {
         onStdout: (line) => this.eventStream.processLine(line),
-        onStderr: (line) => this.eventStream.processLine(line),
+        onStderr: (line) => {
+          this.eventStream.processLine(line);
+          lastError = line;
+        },
+        bufferStdout: false,
+        bufferStderr: false,
       });
       
       if (result.exitCode !== 0) {
         this.eventStream.emit({ type: 'failed', error: `yt-dlp failed with exit code ${result.exitCode}` });
         return fail([{
           category: 'workflow-conflicts',
-          message: `yt-dlp failed with exit code ${result.exitCode}: ${result.stderr}`,
+          message: `yt-dlp failed with exit code ${result.exitCode}${lastError ? `: ${lastError}` : ''}`,
         }]);
       }
       

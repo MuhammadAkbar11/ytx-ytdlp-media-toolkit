@@ -24,7 +24,9 @@ export class FilenamePreview {
     args.push('--get-filename');
 
     try {
-      const result = await this.processRunner.run('yt-dlp', args);
+      const result = await this.processRunner.run('yt-dlp', args, {
+        bufferStderr: false,
+      });
       if (result.exitCode === 0) {
         let filename = result.stdout.trim();
 

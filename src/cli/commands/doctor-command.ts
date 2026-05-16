@@ -37,7 +37,9 @@ export class DoctorCommand {
     label: string
   ): Promise<void> {
     try {
-      const result = await this.processRunner.run(command, args);
+      const result = await this.processRunner.run(command, args, {
+        bufferStderr: false,
+      });
       if (result.exitCode === 0) {
         const version = result.stdout.split('\n')[0].trim();
         console.log(`[✓] ${label} is available: ${version}`);
