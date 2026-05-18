@@ -23,7 +23,10 @@ export class ConfigService {
       console.error(
         chalk.red(`\n❌️ Config validation failed. Falling back to defaults.`)
       );
-      console.error(chalk.yellow(parseResult.error.message));
+      const formattedErrors = parseResult.error.issues
+        .map((err) => `  - ${err.path.join('.')}: ${err.message}`)
+        .join('\n');
+      console.error(chalk.yellow(formattedErrors));
       this.store.store = DEFAULT_CONFIG;
     } else {
       this.store.store = parseResult.data as AppConfig;
@@ -35,7 +38,25 @@ export class ConfigService {
   }
 
   set<K extends keyof AppConfig>(key: K, value: AppConfig[K]): void {
-    this.store.set(key, value);
+    // 1. Ensure the key is valid (part of AppConfigSchema shape)
+    if (!(key in AppConfigSchema.shape)) {
+      throw new Error(`Invalid configuration key: '${String(key)}'`);
+    }
+
+    // 2. Build proposed new state
+    const nextConfig = { ...this.store.store, [key]: value };
+
+    // 3. Validate next state with AppConfigSchema
+    const parseResult = AppConfigSchema.safeParse(nextConfig);
+    if (!parseResult.success) {
+      const formattedErrors = parseResult.error.issues
+        .map((err) => `${err.path.join('.')}: ${err.message}`)
+        .join(', ');
+      throw new Error(`Validation failed: ${formattedErrors}`);
+    }
+
+    // 4. Update store with validated data
+    this.store.set(key, parseResult.data[key] as any);
   }
 
   reset(): void {

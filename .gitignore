@@ -12,5 +12,5 @@ dist/
 
 # Dev folder
 .dev/
-
+.agents/
 *archive.*
