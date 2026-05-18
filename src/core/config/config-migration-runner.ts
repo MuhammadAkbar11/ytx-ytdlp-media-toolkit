@@ -11,14 +11,17 @@ export class ConfigMigrationRunner {
     let currentVersion = initialVersion;
     const migratedConfig = { ...config };
 
-    runtimeDiagnostics.log('info', `Checking config migration. Current version: ${initialVersion}`);
+    runtimeDiagnostics.log(
+      'info',
+      `Checking config migration. Current version: ${initialVersion}`
+    );
 
     // v1 -> v2 migration example (placeholder)
     if (currentVersion === 1) {
       runtimeDiagnostics.log('info', 'Migrating config from v1 to v2');
       // Perform migration steps here if needed
       // Example: if (migratedConfig.oldKey) { migratedConfig.newKey = migratedConfig.oldKey; delete migratedConfig.oldKey; }
-      
+
       currentVersion = 2;
       migratedConfig.version = 2;
     }
@@ -27,7 +30,10 @@ export class ConfigMigrationRunner {
     // if (currentVersion === 2) { ... }
 
     if (currentVersion !== initialVersion) {
-      runtimeDiagnostics.log('info', `Config migrated successfully to version ${currentVersion}`);
+      runtimeDiagnostics.log(
+        'info',
+        `Config migrated successfully to version ${currentVersion}`
+      );
     }
 
     return migratedConfig;
