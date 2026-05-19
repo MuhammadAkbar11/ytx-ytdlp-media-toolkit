@@ -74,23 +74,20 @@ export class TerminalRenderer {
         console.log(chalk.red(`✘ Download failed: ${event.error}`));
         break;
       case 'warning':
-        this.pauseProgressBar();
-        console.log(chalk.yellow(`⚠︎ Warning: ${event.message}`));
-        this.resumeProgressBar();
+        this.logAboveRenderer(chalk.yellow(`⚠︎ Warning: ${event.message}`));
         break;
       case 'error':
-        this.pauseProgressBar();
-        console.log(chalk.red(`✘ Error: ${event.message}`));
-        this.resumeProgressBar();
+        this.logAboveRenderer(chalk.red(`✘ Error: ${event.message}`));
         break;
       case 'item-started':
-        this.pauseProgressBar();
-        console.log(
+        this.currentPercentage = 0;
+        this.currentPayload = {};
+        this.estimatedSize = null;
+        this.logAboveRenderer(
           chalk.blue(
             `\n➤ Processing item ${event.itemIndex}/${event.totalItems}`
           )
         );
-        this.resumeProgressBar();
         break;
       case 'progress': {
         // Stop spinner when progress starts
@@ -153,25 +150,22 @@ export class TerminalRenderer {
     }
   }
 
-  private pauseProgressBar(): void {
+  private logAboveRenderer(message: string): void {
     if (this.progressBar && runtimeEnvironment.isInteractive) {
-      // Clear the current line to avoid ghost bars when resuming
       if (runtimeEnvironment.supportsCursorControl) {
         readline.clearLine(process.stdout, 0);
         readline.cursorTo(process.stdout, 0);
       }
       this.progressBar.stop();
-    }
-    if (this.spinner) {
-      this.spinner.stop();
-    }
-  }
-
-  private resumeProgressBar(): void {
-    if (this.progressBar && this.hasStartedBar) {
-      this.progressBar.start(100, this.currentPercentage, this.currentPayload);
+      this.progressBar = null;
+      this.hasStartedBar = false;
+      console.log(message);
     } else if (this.spinner) {
+      this.spinner.stop();
+      console.log(message);
       this.spinner.start();
+    } else {
+      console.log(message);
     }
   }
 
