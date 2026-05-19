@@ -13,7 +13,7 @@ import { ProfileBuilder } from '../../core/profiles/profile-builder';
 import { ConfigService } from '../../core/config/config.service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
 import { DirectoryValidator } from '../../core/filesystem/directory-validator';
-import { DebugRenderer } from '../renderers/debug-renderer';
+
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
 import { RuntimePreflightResolver } from '../../core/preflight/runtime-preflight-resolver';
@@ -67,15 +67,7 @@ export class DownloadCommand {
     renderer.start();
     gracefulShutdownManager.registerCleanup(() => renderer.stop());
 
-    let debugRenderer: any;
-    if (options.verbose) {
-      debugRenderer = new DebugRenderer(this.eventStream, {
-        verbose: true,
-        debug: false,
-      });
-      debugRenderer.start();
-      gracefulShutdownManager.registerCleanup(() => debugRenderer.stop());
-    }
+
 
     try {
       // 1. Prompt for URL if not provided
@@ -564,9 +556,6 @@ export class DownloadCommand {
       }
     } finally {
       renderer.stop();
-      if (debugRenderer) {
-        debugRenderer.stop();
-      }
     }
   }
 }
