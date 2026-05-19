@@ -65,7 +65,7 @@ export class TerminalRenderer {
           this.progressBar.update(100);
         }
         this.clearProgress();
-        console.log(chalk.green('✔ Download completed successfully'));
+        console.log(chalk.green('\n✔ Download completed successfully'));
         break;
       case 'failed':
         if (this.spinner) {

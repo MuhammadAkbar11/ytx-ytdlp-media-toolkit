@@ -17,6 +17,8 @@ import { DirectoryValidator } from '../../core/filesystem/directory-validator';
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
 import { RuntimePreflightResolver } from '../../core/preflight/runtime-preflight-resolver';
+import { PlaylistInspector } from '../../core/playlist/playlist-inspector';
+import { SearchablePlaylistSelector } from '../../core/prompts/searchable-playlist-selector';
 import { BrowserName } from '../../types/common';
 import chalk from 'chalk';
 import ora from 'ora';
@@ -56,7 +58,9 @@ export class DownloadCommand {
     private presetRegistry: PresetRegistry,
     private dryRunWorkflow: DryRunWorkflow,
     private directoryValidator: DirectoryValidator,
-    private runtimePreflightResolver: RuntimePreflightResolver
+    private runtimePreflightResolver: RuntimePreflightResolver,
+    private playlistInspector: PlaylistInspector,
+    private searchablePlaylistSelector: SearchablePlaylistSelector
   ) {}
 
   async execute(
@@ -198,23 +202,45 @@ export class DownloadCommand {
       }
       const valRes = validateUrl(url);
       if (valRes.ok && valRes.value.type === 'playlist') {
-        const playlistMode = await select<
-          'entire_playlist' | 'first_video' | 'selected_items'
-        >({
-          message: 'Playlist detected. How do you want to proceed?',
-          choices: [
-            { name: 'Download entire playlist', value: 'entire_playlist' },
-            { name: 'Download first item only', value: 'first_video' },
-            { name: 'Specify items (e.g. 1,3,5-10)', value: 'selected_items' },
-          ],
-        });
-
+        let playlistMode: 'entire_playlist' | 'first_video' | 'selected_items' = 'entire_playlist';
         let selectedItems: string | undefined;
-        if (playlistMode === 'selected_items') {
-          selectedItems = await input({
-            message: 'Enter items to download (e.g. 1,3,5-10):',
-            validate: (val) => val.trim().length > 0 || 'Cannot be empty',
+
+        if (runtimeEnvironment.isInteractive) {
+          playlistMode = await select<
+            'entire_playlist' | 'first_video' | 'selected_items'
+          >({
+            message: 'Playlist detected. How do you want to proceed?',
+            choices: [
+              { name: 'Download entire playlist', value: 'entire_playlist' },
+              { name: 'Download first item only', value: 'first_video' },
+              { name: 'Select specific items', value: 'selected_items' },
+            ],
           });
+
+          if (playlistMode === 'selected_items') {
+            const spinner = ora('Fetching playlist items...').start();
+            const itemsRes = await this.playlistInspector.getPlaylistItems(url, browserCookies || undefined);
+            spinner.stop();
+
+            if (!itemsRes.ok) {
+              console.log(chalk.red(`\n✘ Failed to fetch playlist items: ${itemsRes.error}`));
+              selectedItems = await input({
+                message: 'Enter items manually (e.g. 1,3,5-10):',
+                validate: (val) => val.trim().length > 0 || 'Cannot be empty',
+              });
+            } else {
+              const selection = await this.searchablePlaylistSelector.promptForSelection(itemsRes.value);
+              if (!selection) {
+                console.log(chalk.yellow('\n⚠ No items selected. Falling back to entire playlist.'));
+                playlistMode = 'entire_playlist';
+              } else {
+                selectedItems = selection;
+              }
+            }
+          }
+        } else {
+          // Non-interactive fallback: we must have a flag or we default to entire_playlist
+          playlistMode = 'entire_playlist';
         }
 
         globalOverrides.playlist = {

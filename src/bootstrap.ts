@@ -18,6 +18,8 @@ import { SessionInspectionCache } from './core/cache/session-inspection-cache';
 import { TransientFailureClassifier } from './core/runtime/transient-failure-classifier';
 import { RetryingProcessRunner } from './core/runtime/retrying-process-runner';
 import { RuntimePreflightResolver } from './core/preflight/runtime-preflight-resolver';
+import { PlaylistInspector } from './core/playlist/playlist-inspector';
+import { SearchablePlaylistSelector } from './core/prompts/searchable-playlist-selector';
 
 export function bootstrap() {
   const logger = new ConsoleLogger();
@@ -42,6 +44,8 @@ export function bootstrap() {
   const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
   const dryRunWorkflow = new DryRunWorkflow(inspectionService, formatNormalizer, profileBuilder, profileValidator, presetRegistry, argumentBuilder);
   const filenamePreview = new FilenamePreview(retryingProcessRunner, argumentBuilder);
+  const playlistInspector = new PlaylistInspector(retryingProcessRunner);
+  const searchablePlaylistSelector = new SearchablePlaylistSelector();
 
   return {
     logger,
@@ -57,6 +61,8 @@ export function bootstrap() {
     profileBuilder,
     filenamePreview,
     runtimePreflightResolver,
+    playlistInspector,
+    searchablePlaylistSelector,
     directoryValidator: new DirectoryValidator(),
   };
 }

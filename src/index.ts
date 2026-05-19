@@ -54,7 +54,9 @@ async function main() {
     services.presetRegistry,
     services.dryRunWorkflow,
     services.directoryValidator,
-    services.runtimePreflightResolver
+    services.runtimePreflightResolver,
+    services.playlistInspector,
+    services.searchablePlaylistSelector
   );
 
   const doctorCommand = new DoctorCommand(
