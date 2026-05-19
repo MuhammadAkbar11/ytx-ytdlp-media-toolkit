@@ -104,4 +104,28 @@ describe('EventStream', () => {
     expect(events[0].type).toBe('warning');
     expect(events[1].type).toBe('warning');
   });
+
+  test('should emit processing events for post-download tasks', () => {
+    const stream = new EventStream();
+    const events: DownloadEvent[] = [];
+    
+    stream.subscribe((e) => events.push(e));
+
+    const mergerLine = '[Merger] Merging formats into "output.mp4"';
+    stream.processLine(mergerLine);
+
+    const extractLine = '[ExtractAudio] Destination: output.mp3';
+    stream.processLine(extractLine);
+
+    const metadataLine = '[Metadata] Adding metadata to "output.mp4"';
+    stream.processLine(metadataLine);
+
+    expect(events.length).toBe(3);
+    expect(events[0].type).toBe('processing');
+    expect(events[0].type === 'processing' && events[0].action).toBe('Merging video and audio formats...');
+    expect(events[1].type).toBe('processing');
+    expect(events[1].type === 'processing' && events[1].action).toBe('Extracting and converting audio...');
+    expect(events[2].type).toBe('processing');
+    expect(events[2].type === 'processing' && events[2].action).toBe('Embedding metadata...');
+  });
 });

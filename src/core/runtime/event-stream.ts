@@ -60,13 +60,28 @@ export class EventStream {
         this.emit({ type: 'error', message: line.replace(/^ERROR:/, '').trim() });
         break;
       case 'info': {
-        const itemMatch = line.match(/\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/);
+        const trimmed = line.trim();
+        const itemMatch = trimmed.match(/\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/);
         if (itemMatch) {
           this.emit({
             type: 'item-started',
             itemIndex: parseInt(itemMatch[1], 10),
             totalItems: parseInt(itemMatch[2], 10),
           });
+        } else if (trimmed.startsWith('[Merger]')) {
+          this.emit({ type: 'processing', action: 'Merging video and audio formats...' });
+        } else if (trimmed.startsWith('[ExtractAudio]')) {
+          this.emit({ type: 'processing', action: 'Extracting and converting audio...' });
+        } else if (trimmed.startsWith('[Metadata]')) {
+          this.emit({ type: 'processing', action: 'Embedding metadata...' });
+        } else if (trimmed.startsWith('[Thumbnails]')) {
+          this.emit({ type: 'processing', action: 'Embedding thumbnail...' });
+        } else if (trimmed.startsWith('[VideoConvertor]')) {
+          this.emit({ type: 'processing', action: 'Converting video format...' });
+        } else if (trimmed.startsWith('[Fixup')) {
+          this.emit({ type: 'processing', action: 'Correcting container structure...' });
+        } else if (trimmed.toLowerCase().includes('post-processing') || trimmed.toLowerCase().includes('postprocess')) {
+          this.emit({ type: 'processing', action: 'Running post-download tasks...' });
         }
         break;
       }

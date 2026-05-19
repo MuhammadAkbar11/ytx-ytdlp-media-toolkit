@@ -8,6 +8,7 @@ export type DownloadEvent =
   | { type: 'completed' }
   | { type: 'failed'; error: string }
   | { type: 'item-started'; itemIndex: number; totalItems: number }
+  | { type: 'processing'; action: string }
   | { type: 'debug'; message: string };
 
 export type EventSubscriber = (event: DownloadEvent) => void;

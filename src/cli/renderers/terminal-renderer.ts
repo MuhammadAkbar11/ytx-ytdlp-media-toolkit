@@ -49,7 +49,9 @@ export class TerminalRenderer {
         if (runtimeEnvironment.isInteractive) {
           this.spinner = ora(event.message || 'Starting download...').start();
         } else {
-          console.log(chalk.blue(`➤ ${event.message || 'Starting download...'}`));
+          console.log(
+            chalk.blue(`➤ ${event.message || 'Starting download...'}`)
+          );
         }
         break;
       case 'completed':
@@ -89,21 +91,39 @@ export class TerminalRenderer {
           )
         );
         break;
+      case 'processing':
+        if (this.progressBar) {
+          this.progressBar.update(100, this.currentPayload);
+          this.progressBar.stop();
+          this.progressBar = null;
+          this.hasStartedBar = false;
+        }
+
+        if (runtimeEnvironment.isInteractive) {
+          if (this.spinner) {
+            this.spinner.text = event.action;
+          } else {
+            this.spinner = ora(event.action).start();
+          }
+        } else {
+          console.log(chalk.blue(`➤ ${event.action}`));
+        }
+        break;
       case 'progress': {
         // Stop spinner when progress starts
         if (this.spinner) {
           if (runtimeEnvironment.isInteractive) {
             this.spinner.stopAndPersist({
               symbol: '➤',
-              text: 'Download is Processing',
+              text: 'Processing the download',
             });
           }
           this.spinner = null;
         }
 
         if (!runtimeEnvironment.isInteractive) {
-          // In non-interactive mode, we might want to log progress occasionally, 
-          // but usually we just want to avoid the spam. 
+          // In non-interactive mode, we might want to log progress occasionally,
+          // but usually we just want to avoid the spam.
           // For now, let's just avoid the progress bar.
           break;
         }

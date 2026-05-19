@@ -67,14 +67,14 @@ export class DownloadCommand {
     renderer.start();
     gracefulShutdownManager.registerCleanup(() => renderer.stop());
 
-
-
     try {
       // 1. Prompt for URL if not provided
       let url = initialUrl;
       if (!url) {
         if (!runtimeEnvironment.isInteractive) {
-          console.log(chalk.red('✘ Error: URL is required in non-interactive mode.'));
+          console.log(
+            chalk.red('✘ Error: URL is required in non-interactive mode.')
+          );
           return;
         }
         url = await input({
@@ -96,7 +96,11 @@ export class DownloadCommand {
 
       if (options.browser === true) {
         if (!runtimeEnvironment.isInteractive) {
-          console.log(chalk.yellow('⚠ Warning: --browser flag without value ignored in non-interactive mode.'));
+          console.log(
+            chalk.yellow(
+              '⚠ Warning: --browser flag without value ignored in non-interactive mode.'
+            )
+          );
         } else {
           browserCookies = await select<BrowserName>({
             message: 'Select browser:',
@@ -529,8 +533,8 @@ export class DownloadCommand {
 
         if (res.ok) {
           const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `\n${checkSymbol} File saved to directory: ${profile.outputDirectory}`
-            : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
+            ? `${checkSymbol} File saved to directory: ${profile.outputDirectory}`
+            : `${checkSymbol} File saved to: ${resolvedFilename}`;
 
           console.log(chalk.green(saveMessage));
         }
