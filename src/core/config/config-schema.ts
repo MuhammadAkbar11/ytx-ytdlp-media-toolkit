@@ -24,7 +24,6 @@ export const AppConfigSchema = z.object({
   filenameTemplate: z.string(),
   subtitleOptions: SubtitleOptionsSchema,
   metadataOptions: MetadataOptionsSchema,
-  useDownloadArchive: z.boolean(),
   defaultPreset: z.string(),
   preferredVideoQuality: z.union([
     z.literal(2160),

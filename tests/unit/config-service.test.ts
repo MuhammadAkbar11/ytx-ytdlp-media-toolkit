@@ -57,8 +57,8 @@ describe('ConfigService', () => {
   test('should reject invalid types for known keys', () => {
     const configService = new ConfigService();
     expect(() => {
-      configService.set('useDownloadArchive', 'not-a-boolean' as any);
-    }).toThrow('useDownloadArchive:');
+      configService.set('outputDirectory', 123 as any);
+    }).toThrow('outputDirectory:');
   });
 
   test('should reject invalid enum values for preferredBrowser', () => {

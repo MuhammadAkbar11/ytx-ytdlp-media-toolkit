@@ -12,7 +12,6 @@ export const SYSTEM_DEFAULTS: Partial<DownloadProfile> = {
     embedChapters: false,
   },
   playlist: { mode: 'entire_playlist' },
-  useDownloadArchive: false,
 };
 
 export class ProfileBuilder {
@@ -41,7 +40,6 @@ export class ProfileBuilder {
         format: 'mp3',
         bitrate: config.preferredBitrate,
       },
-      useDownloadArchive: config.useDownloadArchive,
       subtitleOptions: {
         mode: config.subtitleOptions.mode,
         output: config.subtitleOptions.output,

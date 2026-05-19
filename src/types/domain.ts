@@ -34,8 +34,7 @@ export interface DownloadProfile {
   metadataOptions: MetadataOptions;
   browserCookies?: BrowserName | null;
   playlist: PlaylistOptions;
-  useDownloadArchive: boolean;
-  archivePath?: string;
+
   estimatedSize?: number;
   useAria2?: boolean;
 }

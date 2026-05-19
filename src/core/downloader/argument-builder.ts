@@ -72,10 +72,6 @@ export class ArgumentBuilder {
       }
     }
 
-    // 5. Archive
-    if (profile.useDownloadArchive) {
-      args.push('--download-archive', profile.archivePath || 'download-archive.txt');
-    }
 
     // 5.5 Browser Cookies
     if (profile.browserCookies) {

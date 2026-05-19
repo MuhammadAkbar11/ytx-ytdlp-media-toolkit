@@ -40,19 +40,6 @@ export const BUILT_IN_PRESETS: Record<string, Preset> = {
       },
     },
   },
-  archive: {
-    id: 'archive',
-    label: 'Archive',
-    description: 'Downloads everything including subtitles (if available).',
-    profile: {
-      mediaKind: 'video',
-      subtitleOptions: {
-        mode: 'english',
-        output: 'embed',
-      },
-      useDownloadArchive: true,
-    },
-  },
 };
 
 export class PresetRegistry {

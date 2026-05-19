@@ -18,7 +18,6 @@ describe('ArgumentBuilder', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const args = builder.build(profile);
@@ -43,7 +42,6 @@ describe('ArgumentBuilder', () => {
         embedChapters: false,
       },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: true,
     };
 
     const args = builder.build(profile);
@@ -55,8 +53,6 @@ describe('ArgumentBuilder', () => {
     expect(args).toContain('192k');
     expect(args).toContain('--embed-metadata');
     expect(args).toContain('--no-playlist');
-    expect(args).toContain('--download-archive');
-    expect(args).toContain('download-archive.txt');
   });
 
   test('should build arguments with browser cookies', () => {
@@ -73,7 +69,6 @@ describe('ArgumentBuilder', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
       browserCookies: 'chrome',
     };
 
@@ -97,7 +92,6 @@ describe('ArgumentBuilder', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
       useAria2: true,
     };
 
