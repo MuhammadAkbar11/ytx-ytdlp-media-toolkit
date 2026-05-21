@@ -58,7 +58,6 @@ export class ConfigCommand {
       return;
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let parsedValue: any;
     try {
       parsedValue = JSON.parse(value);
