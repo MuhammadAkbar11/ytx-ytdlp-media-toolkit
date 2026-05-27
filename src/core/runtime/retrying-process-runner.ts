@@ -1,5 +1,8 @@
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
-import { ProcessSpawnOptions, ProcessExecutionResult } from '../../types/process';
+import {
+  ProcessSpawnOptions,
+  ProcessExecutionResult,
+} from '../../types/process';
 import { TransientFailureClassifier } from './transient-failure-classifier';
 import { EventStream } from './event-stream';
 
@@ -20,7 +23,18 @@ export class RetryingProcessRunner implements ProcessRunner {
     let attempt = 0;
     while (true) {
       attempt++;
-      const result = await this.inner.run(command, args, options);
+      let result: ProcessExecutionResult;
+      try {
+        result = await this.inner.run(command, args, options);
+      } catch (e) {
+        // Spawn failure or stream error — not retryable
+        const errorMsg = e instanceof Error ? e.message : String(e);
+        this.eventStream.emit({
+          type: 'failed',
+          error: `Process spawn failed for '${command}': ${errorMsg}`,
+        });
+        throw e;
+      }
 
       if (result.exitCode === 0) {
         return result;
@@ -32,7 +46,7 @@ export class RetryingProcessRunner implements ProcessRunner {
 
       if (this.classifier.isRetryable(result)) {
         const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
-        
+
         this.eventStream.emit({
           type: 'warning',
           message: `Transient failure detected. Retrying in ${delay / 1000}s... (Attempt ${attempt}/${this.maxRetries})`,

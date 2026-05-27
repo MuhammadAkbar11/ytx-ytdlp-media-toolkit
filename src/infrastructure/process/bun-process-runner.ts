@@ -40,14 +40,14 @@ export class BunProcessRunner implements ProcessRunner {
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          
+
           const chunk = decoder.decode(value, { stream: true });
           if (bufferOutput) {
             fullText += chunk;
           }
-          
+
           runtimeDiagnostics.log('raw', chunk);
-          
+
           if (onLine) {
             const lines = normalizer.processChunk(chunk);
             for (const line of lines) {
@@ -56,7 +56,7 @@ export class BunProcessRunner implements ProcessRunner {
             }
           }
         }
-        
+
         if (onLine) {
           const lines = normalizer.flush();
           for (const line of lines) {
@@ -86,6 +86,14 @@ export class BunProcessRunner implements ProcessRunner {
       const exitCode = await process.exited;
 
       return { exitCode, stdout, stderr };
+    } catch (e) {
+      // On stream/exit errors, try to kill the process to prevent orphans
+      try {
+        process.kill();
+      } catch {
+        // Ignore — process may have already exited
+      }
+      throw e;
     } finally {
       processLifecycleManager.unregister(process);
     }

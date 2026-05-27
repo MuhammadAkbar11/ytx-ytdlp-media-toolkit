@@ -1,6 +1,9 @@
 import { DownloadProfile } from '../../types/domain';
 import { Result, ok, fail } from '../../utils/result';
-import { ProfileValidator, ValidationIssue } from '../profiles/profile-validator';
+import {
+  ProfileValidator,
+  ValidationIssue,
+} from '../profiles/profile-validator';
 import { ArgumentBuilder } from '../downloader/argument-builder';
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { ProcessExecutionResult } from '../../types/process';
@@ -22,10 +25,17 @@ export class BaseDownloadWorkflow {
    * @param profile The download profile to execute.
    * @returns A Result containing the ProcessExecutionResult or a list of validation issues.
    */
-  async run(profile: DownloadProfile): Promise<Result<ProcessExecutionResult, ValidationIssue[]>> {
+  async run(
+    profile: DownloadProfile
+  ): Promise<Result<ProcessExecutionResult, ValidationIssue[]>> {
     // 1. Validate Profile
     const valRes = this.profileValidator.validate(profile);
     if (!valRes.ok) {
+      const issueMessages = valRes.error.map((i) => i.message).join('; ');
+      this.eventStream.emit({
+        type: 'failed',
+        error: `Profile validation failed: ${issueMessages}`,
+      });
       return fail(valRes.error);
     }
 
@@ -38,42 +48,62 @@ export class BaseDownloadWorkflow {
 
     // 3. Emit started event
     const estimator = new ArtifactSizeEstimator();
-    this.eventStream.emit({ 
+    this.eventStream.emit({
       type: 'started',
-      message: profile.browserCookies ? 'Fetching browser cookies...' : 'Starting download...',
-      estimatedSize: profile.estimatedSize ? estimator.formatSize(profile.estimatedSize) : undefined
+      message: profile.browserCookies
+        ? 'Fetching browser cookies...'
+        : 'Starting download...',
+      estimatedSize: profile.estimatedSize
+        ? estimator.formatSize(profile.estimatedSize)
+        : undefined,
     });
 
     // 4. Execute yt-dlp
-    let lastError = '';
+    const stderrLines: string[] = [];
     try {
       const result = await this.processRunner.run('yt-dlp', args, {
         onStdout: (line) => this.eventStream.processLine(line),
         onStderr: (line) => {
           this.eventStream.processLine(line);
-          lastError = line;
+          stderrLines.push(line);
         },
         bufferStdout: false,
         bufferStderr: false,
       });
-      
+
       if (result.exitCode !== 0) {
-        this.eventStream.emit({ type: 'failed', error: `yt-dlp failed with exit code ${result.exitCode}` });
-        return fail([{
-          category: 'workflow-conflicts',
-          message: `yt-dlp failed with exit code ${result.exitCode}${lastError ? `: ${lastError}` : ''}`,
-        }]);
+        const lastError = stderrLines[stderrLines.length - 1] || '';
+        const errorDetail = lastError
+          ? `: ${lastError}`
+          : stderrLines.length > 0
+            ? `: ${stderrLines[stderrLines.length - 1]}`
+            : '';
+        this.eventStream.emit({
+          type: 'failed',
+          error: `yt-dlp failed with exit code ${result.exitCode}${errorDetail}`,
+        });
+        return fail([
+          {
+            category: 'workflow-conflicts',
+            message: `yt-dlp failed with exit code ${result.exitCode}${errorDetail}`,
+          },
+        ]);
       }
-      
+
       this.eventStream.emit({ type: 'completed' });
       return ok(result);
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e);
-      this.eventStream.emit({ type: 'failed', error: `Failed to execute yt-dlp: ${errorMsg}` });
-      return fail([{
-        category: 'workflow-conflicts',
-        message: `Failed to execute yt-dlp: ${errorMsg}`,
-      }]);
+      this.eventStream.emit({
+        type: 'failed',
+        error: `Failed to execute yt-dlp: ${errorMsg}`,
+      });
+      return fail([
+        {
+          category: 'workflow-conflicts',
+          message: `Failed to execute yt-dlp: ${errorMsg}`,
+        },
+      ]);
     }
   }
 }

@@ -538,8 +538,12 @@ export class DownloadCommand {
           const saveMessage = resolvedFilename.startsWith('Error:')
             ? `${checkSymbol} File saved to directory: ${profile.outputPath}`
             : `${checkSymbol} File saved to: ${resolvedFilename}`;
-
           console.log(chalk.green(saveMessage));
+        } else {
+          console.log(chalk.red('\n✘ Download failed:'));
+          for (const issue of res.error) {
+            console.log(chalk.red(`  - [${issue.category}] ${issue.message}`));
+          }
         }
       } else {
         const res = await this.mp3Workflow.run(profile);
@@ -547,13 +551,37 @@ export class DownloadCommand {
           const saveMessage = resolvedFilename.startsWith('Error:')
             ? `\n${checkSymbol} File saved to directory: ${profile.outputPath}`
             : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
-
           console.log(chalk.green(saveMessage));
+        } else {
+          console.log(chalk.red('\n✘ Download failed:'));
+          for (const issue of res.error) {
+            console.log(chalk.red(`  - [${issue.category}] ${issue.message}`));
+          }
         }
       }
     } catch (e) {
       if (e instanceof Error && e.name === 'ExitPromptError') {
         console.log(chalk.yellow('\n⚠️ Operation aborted by user.'));
+      } else if (e instanceof Error && e.message.includes('ENOENT')) {
+        console.log(
+          chalk.red(
+            `\n✘ Command not found. Ensure yt-dlp and ffmpeg are installed and on PATH.`
+          )
+        );
+      } else if (
+        e instanceof Error &&
+        (e.message.includes('EACCES') || e.message.includes('permission'))
+      ) {
+        console.log(
+          chalk.red(
+            `\n✘ Permission denied. Check file/directory permissions for the output path.`
+          )
+        );
+      } else if (
+        e instanceof Error &&
+        (e.message.includes('ENOSPC') || e.message.includes('disk'))
+      ) {
+        console.log(chalk.red(`\n✘ Disk full. Free up space and try again.`));
       } else {
         console.log(
           chalk.red(

@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { runtimeDiagnostics } from '../../core/runtime/diagnostics/runtime-diagnostics';
+
 export class ProcessLifecycleManager {
   private activeProcesses = new Set<any>();
 
@@ -19,14 +21,25 @@ export class ProcessLifecycleManager {
   }
 
   /**
+   * Returns the count of currently active processes.
+   */
+  get activeCount(): number {
+    return this.activeProcesses.size;
+  }
+
+  /**
    * Kills all active processes.
+   * Each kill is individually try-caught to ensure all processes are attempted.
    */
   killAll(): void {
+    const count = this.activeProcesses.size;
+    if (count > 0) {
+      runtimeDiagnostics.log('info', `Killing ${count} active process(es)...`);
+    }
     for (const process of this.activeProcesses) {
       try {
         process.kill();
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      } catch (e) {
+      } catch {
         // Ignore errors if process already exited
       }
     }
