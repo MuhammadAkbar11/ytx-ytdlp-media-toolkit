@@ -72,7 +72,6 @@ export class ArgumentBuilder {
       }
     }
 
-
     // 5.5 Browser Cookies
     if (profile.browserCookies) {
       args.push('--cookies-from-browser', profile.browserCookies);
@@ -84,11 +83,8 @@ export class ArgumentBuilder {
     args.push(...strategy.getArgs(profile));
 
     // 6. Output Template
-    if (profile.outputDirectory && profile.filenameTemplate) {
-      const template = path.join(
-        profile.outputDirectory,
-        profile.filenameTemplate
-      );
+    if (profile.outputPath && profile.filenameTemplate) {
+      const template = path.join(profile.outputPath, profile.filenameTemplate);
       args.push('-o', template);
     } else if (profile.filenameTemplate) {
       args.push('-o', profile.filenameTemplate);

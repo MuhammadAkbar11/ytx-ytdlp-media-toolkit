@@ -9,13 +9,12 @@ describe('ArtifactSizeEstimator', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       audioOptions: { format: 'mp3', bitrate: 320 },
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const info: YtDlpInfo = {
@@ -40,13 +39,12 @@ describe('ArtifactSizeEstimator', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       audioOptions: { format: 'mp3', bitrate: 320 },
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const info: YtDlpInfo = {
@@ -64,13 +62,12 @@ describe('ArtifactSizeEstimator', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const info: YtDlpInfo = {

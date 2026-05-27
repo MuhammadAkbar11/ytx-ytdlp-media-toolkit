@@ -48,8 +48,8 @@ describe('DryRunWorkflow', () => {
     );
 
     const config: AppConfig = {
-      version: 1,
-      outputDirectory: '.',
+      version: 3,
+      outputPath: '.',
       preferredBrowser: null,
       preferredBitrate: 192,
       filenameTemplate: '%(title)s.%(ext)s',
@@ -59,7 +59,6 @@ describe('DryRunWorkflow', () => {
         embedThumbnail: false,
         embedChapters: false,
       },
-      useDownloadArchive: false,
       defaultPreset: 'balanced',
       preferredVideoQuality: 'best',
     };

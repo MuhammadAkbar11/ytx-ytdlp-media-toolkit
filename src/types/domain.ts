@@ -26,7 +26,7 @@ export interface AudioOptions {
 export interface DownloadProfile {
   url: string;
   mediaKind: MediaKind;
-  outputDirectory: string;
+  outputPath: string;
   filenameTemplate: string;
   videoQuality?: VideoQuality;
   audioOptions?: AudioOptions;

@@ -42,7 +42,7 @@ describe('PlaylistWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/playlist?list=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: {
@@ -51,7 +51,6 @@ describe('PlaylistWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);

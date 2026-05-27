@@ -13,7 +13,7 @@ import { DryRunWorkflow } from './core/workflows/dry-run-workflow';
 import { PresetRegistry } from './core/presets/preset-registry';
 import { FormatNormalizer } from './core/formats/format-normalizer';
 import { FilenamePreview } from './cli/renderers/filename-preview';
-import { DirectoryValidator } from './core/filesystem/directory-validator';
+import { OutputPathResolver } from './core/filesystem/output-path-resolver';
 import { SessionInspectionCache } from './core/cache/session-inspection-cache';
 import { TransientFailureClassifier } from './core/runtime/transient-failure-classifier';
 import { RetryingProcessRunner } from './core/runtime/retrying-process-runner';
@@ -30,20 +30,52 @@ export function bootstrap() {
   const formatNormalizer = new FormatNormalizer();
   const sessionInspectionCache = new SessionInspectionCache();
   const eventStream = new EventStream();
-  
+
   const classifier = new TransientFailureClassifier();
-  const retryingProcessRunner = new RetryingProcessRunner(processRunner, classifier, eventStream);
-  
-  const inspectionService = new InspectionService(retryingProcessRunner, sessionInspectionCache);
+  const retryingProcessRunner = new RetryingProcessRunner(
+    processRunner,
+    classifier,
+    eventStream
+  );
+
+  const inspectionService = new InspectionService(
+    retryingProcessRunner,
+    sessionInspectionCache
+  );
   const argumentBuilder = new ArgumentBuilder();
   const profileValidator = new ProfileValidator();
   const runtimePreflightResolver = new RuntimePreflightResolver(processRunner);
 
-  const mp4Workflow = new Mp4DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
-  const mp3Workflow = new Mp3DownloadWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
-  const subtitleWorkflow = new SubtitleWorkflow(profileValidator, argumentBuilder, retryingProcessRunner, eventStream);
-  const dryRunWorkflow = new DryRunWorkflow(inspectionService, formatNormalizer, profileBuilder, profileValidator, presetRegistry, argumentBuilder);
-  const filenamePreview = new FilenamePreview(retryingProcessRunner, argumentBuilder);
+  const mp4Workflow = new Mp4DownloadWorkflow(
+    profileValidator,
+    argumentBuilder,
+    retryingProcessRunner,
+    eventStream
+  );
+  const mp3Workflow = new Mp3DownloadWorkflow(
+    profileValidator,
+    argumentBuilder,
+    retryingProcessRunner,
+    eventStream
+  );
+  const subtitleWorkflow = new SubtitleWorkflow(
+    profileValidator,
+    argumentBuilder,
+    retryingProcessRunner,
+    eventStream
+  );
+  const dryRunWorkflow = new DryRunWorkflow(
+    inspectionService,
+    formatNormalizer,
+    profileBuilder,
+    profileValidator,
+    presetRegistry,
+    argumentBuilder
+  );
+  const filenamePreview = new FilenamePreview(
+    retryingProcessRunner,
+    argumentBuilder
+  );
   const playlistInspector = new PlaylistInspector(retryingProcessRunner);
   const searchablePlaylistSelector = new SearchablePlaylistSelector();
 
@@ -63,6 +95,6 @@ export function bootstrap() {
     runtimePreflightResolver,
     playlistInspector,
     searchablePlaylistSelector,
-    directoryValidator: new DirectoryValidator(),
+    outputPathResolver: new OutputPathResolver(),
   };
 }

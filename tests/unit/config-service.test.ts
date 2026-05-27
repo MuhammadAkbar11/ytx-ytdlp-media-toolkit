@@ -33,7 +33,7 @@ describe('ConfigService', () => {
 
   test('should load valid default config successfully', () => {
     const configService = new ConfigService();
-    expect(configService.get('version')).toBe(2);
+    expect(configService.get('version')).toBe(3);
     expect(configService.get('defaultPreset')).toBe('balanced');
     expect(configService.get('preferredVideoQuality')).toBe('best');
   });
@@ -57,8 +57,8 @@ describe('ConfigService', () => {
   test('should reject invalid types for known keys', () => {
     const configService = new ConfigService();
     expect(() => {
-      configService.set('outputDirectory', 123 as any);
-    }).toThrow('outputDirectory:');
+      configService.set('outputPath', 123 as any);
+    }).toThrow('outputPath:');
   });
 
   test('should reject invalid enum values for preferredBrowser', () => {

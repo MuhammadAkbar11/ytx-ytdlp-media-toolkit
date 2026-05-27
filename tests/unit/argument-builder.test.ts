@@ -8,7 +8,7 @@ describe('ArgumentBuilder', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -32,7 +32,7 @@ describe('ArgumentBuilder', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       audioOptions: { format: 'mp3', bitrate: 192 },
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -60,7 +60,7 @@ describe('ArgumentBuilder', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: {
@@ -83,7 +83,7 @@ describe('ArgumentBuilder', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: {

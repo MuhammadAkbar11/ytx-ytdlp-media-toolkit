@@ -41,7 +41,7 @@ describe('Mp3DownloadWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       audioOptions: { format: 'mp3', bitrate: 192 },
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -51,7 +51,6 @@ describe('Mp3DownloadWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);
@@ -89,7 +88,7 @@ describe('Mp3DownloadWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       audioOptions: { format: 'mp3', bitrate: 192 },
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -99,7 +98,6 @@ describe('Mp3DownloadWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);

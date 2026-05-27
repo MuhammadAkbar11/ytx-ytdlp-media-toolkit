@@ -3,15 +3,18 @@ import { AppConfig } from '../../types/config';
 import { DEFAULT_CONFIG } from './default-config';
 import { ConfigMigrationRunner } from './config-migration-runner';
 import { AppConfigSchema } from './config-schema';
+import { XDGConfigResolver } from './xdg-config-resolver';
 import chalk from 'chalk';
 
 export class ConfigService {
   private store: Conf<AppConfig>;
 
   constructor() {
+    const xdgResolver = new XDGConfigResolver();
     this.store = new Conf<AppConfig>({
       defaults: DEFAULT_CONFIG,
-      projectName: 'ytx',
+      cwd: xdgResolver.getConfigDir(),
+      configName: 'config',
     });
 
     const migrationRunner = new ConfigMigrationRunner();

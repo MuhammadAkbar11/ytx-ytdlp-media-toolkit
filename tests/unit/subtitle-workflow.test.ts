@@ -41,7 +41,7 @@ describe('SubtitleWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'english', output: 'separate' },
       metadataOptions: {
@@ -50,7 +50,6 @@ describe('SubtitleWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);
@@ -88,7 +87,7 @@ describe('SubtitleWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'english', output: 'separate' },
       metadataOptions: {
@@ -97,7 +96,6 @@ describe('SubtitleWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'first_video' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);

@@ -3,7 +3,7 @@ import { AppConfig } from '../../types/config';
 
 export const SYSTEM_DEFAULTS: Partial<DownloadProfile> = {
   mediaKind: 'video',
-  outputDirectory: '.',
+  outputPath: '.',
   filenameTemplate: '%(title)s.%(ext)s',
   subtitleOptions: { mode: 'none', output: 'separate' },
   metadataOptions: {
@@ -32,7 +32,7 @@ export class ProfileBuilder {
     overrides?: Partial<DownloadProfile>
   ): DownloadProfile {
     const configDefaults: Partial<DownloadProfile> = {
-      outputDirectory: config.outputDirectory,
+      outputPath: config.outputPath,
       filenameTemplate: config.filenameTemplate,
       browserCookies: config.preferredBrowser,
       videoQuality: config.preferredVideoQuality ?? 'best',

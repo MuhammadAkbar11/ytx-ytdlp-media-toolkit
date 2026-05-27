@@ -70,7 +70,7 @@ export class FilenamePreview {
 
     const symbol = chalk.blue('➤');
     console.log(`${chalk.blue('❖')} Preview Results:`);
-    console.log(`${symbol} Download Directory: ${profile.outputDirectory}`);
+    console.log(`${symbol} Output Path: ${profile.outputPath}`);
     console.log(`${symbol} Filename Template: ${profile.filenameTemplate}`);
     console.log(`${symbol} Predicted Output: ${filename}\n`);
 

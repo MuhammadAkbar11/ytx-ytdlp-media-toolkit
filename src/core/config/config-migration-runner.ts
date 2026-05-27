@@ -16,18 +16,29 @@ export class ConfigMigrationRunner {
       `Checking config migration. Current version: ${initialVersion}`
     );
 
-    // v1 -> v2 migration example (placeholder)
+    // v1 -> v2 migration (placeholder from previous version)
     if (currentVersion === 1) {
       runtimeDiagnostics.log('info', 'Migrating config from v1 to v2');
-      // Perform migration steps here if needed
-      // Example: if (migratedConfig.oldKey) { migratedConfig.newKey = migratedConfig.oldKey; delete migratedConfig.oldKey; }
-
       currentVersion = 2;
       migratedConfig.version = 2;
     }
 
+    // v2 -> v3 migration: rename outputDirectory → outputPath
+    if (currentVersion === 2) {
+      runtimeDiagnostics.log('info', 'Migrating config from v2 to v3');
+      if (
+        'outputDirectory' in migratedConfig &&
+        !('outputPath' in migratedConfig)
+      ) {
+        migratedConfig.outputPath = migratedConfig.outputDirectory;
+      }
+      delete migratedConfig.outputDirectory;
+      currentVersion = 3;
+      migratedConfig.version = 3;
+    }
+
     // Add future migrations here:
-    // if (currentVersion === 2) { ... }
+    // if (currentVersion === 3) { ... }
 
     if (currentVersion !== initialVersion) {
       runtimeDiagnostics.log(

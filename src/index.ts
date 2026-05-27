@@ -53,7 +53,7 @@ async function main() {
     services.configService,
     services.presetRegistry,
     services.dryRunWorkflow,
-    services.directoryValidator,
+    services.outputPathResolver,
     services.runtimePreflightResolver,
     services.playlistInspector,
     services.searchablePlaylistSelector
@@ -61,7 +61,8 @@ async function main() {
 
   const doctorCommand = new DoctorCommand(
     services.processRunner,
-    services.configService
+    services.configService,
+    services.outputPathResolver
   );
 
   const configCommand = new ConfigCommand(services.configService);
@@ -75,7 +76,10 @@ async function main() {
     .argument('[url]', 'Optional YouTube URL to download')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')
-    .option('--browser [browser]', 'Browser to use for cookies (chrome, firefox, edge, brave, safari)')
+    .option(
+      '--browser [browser]',
+      'Browser to use for cookies (chrome, firefox, edge, brave, safari)'
+    )
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });
@@ -98,7 +102,10 @@ async function main() {
     .option('--output <dir>', 'Output directory')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')
-    .option('--browser [browser]', 'Browser to use for cookies (chrome, firefox, edge, brave, safari)')
+    .option(
+      '--browser [browser]',
+      'Browser to use for cookies (chrome, firefox, edge, brave, safari)'
+    )
     .action(async (url, options) => {
       await downloadCommand.execute(url, options);
     });

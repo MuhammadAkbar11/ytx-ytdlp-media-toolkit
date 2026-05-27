@@ -41,7 +41,7 @@ describe('Mp4DownloadWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -51,7 +51,6 @@ describe('Mp4DownloadWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);
@@ -89,7 +88,7 @@ describe('Mp4DownloadWorkflow', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
@@ -99,7 +98,6 @@ describe('Mp4DownloadWorkflow', () => {
         embedChapters: false,
       },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = await workflow.run(profile);

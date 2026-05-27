@@ -19,7 +19,7 @@ describe('FilenamePreview', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
@@ -43,7 +43,7 @@ describe('FilenamePreview', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },

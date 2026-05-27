@@ -12,7 +12,7 @@ import { validateUrl } from '../../core/validation/url-validator';
 import { ProfileBuilder } from '../../core/profiles/profile-builder';
 import { ConfigService } from '../../core/config/config.service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
-import { DirectoryValidator } from '../../core/filesystem/directory-validator';
+import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
 
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
 import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
@@ -57,7 +57,7 @@ export class DownloadCommand {
     private configService: ConfigService,
     private presetRegistry: PresetRegistry,
     private dryRunWorkflow: DryRunWorkflow,
-    private directoryValidator: DirectoryValidator,
+    private outputPathResolver: OutputPathResolver,
     private runtimePreflightResolver: RuntimePreflightResolver,
     private playlistInspector: PlaylistInspector,
     private searchablePlaylistSelector: SearchablePlaylistSelector
@@ -202,7 +202,8 @@ export class DownloadCommand {
       }
       const valRes = validateUrl(url);
       if (valRes.ok && valRes.value.type === 'playlist') {
-        let playlistMode: 'entire_playlist' | 'first_video' | 'selected_items' = 'entire_playlist';
+        let playlistMode: 'entire_playlist' | 'first_video' | 'selected_items' =
+          'entire_playlist';
         let selectedItems: string | undefined;
 
         if (runtimeEnvironment.isInteractive) {
@@ -219,19 +220,33 @@ export class DownloadCommand {
 
           if (playlistMode === 'selected_items') {
             const spinner = ora('Fetching playlist items...').start();
-            const itemsRes = await this.playlistInspector.getPlaylistItems(url, browserCookies || undefined);
+            const itemsRes = await this.playlistInspector.getPlaylistItems(
+              url,
+              browserCookies || undefined
+            );
             spinner.stop();
 
             if (!itemsRes.ok) {
-              console.log(chalk.red(`\n✘ Failed to fetch playlist items: ${itemsRes.error}`));
+              console.log(
+                chalk.red(
+                  `\n✘ Failed to fetch playlist items: ${itemsRes.error}`
+                )
+              );
               selectedItems = await input({
                 message: 'Enter items manually (e.g. 1,3,5-10):',
                 validate: (val) => val.trim().length > 0 || 'Cannot be empty',
               });
             } else {
-              const selection = await this.searchablePlaylistSelector.promptForSelection(itemsRes.value);
+              const selection =
+                await this.searchablePlaylistSelector.promptForSelection(
+                  itemsRes.value
+                );
               if (!selection) {
-                console.log(chalk.yellow('\n⚠ No items selected. Falling back to entire playlist.'));
+                console.log(
+                  chalk.yellow(
+                    '\n⚠ No items selected. Falling back to entire playlist.'
+                  )
+                );
                 playlistMode = 'entire_playlist';
               } else {
                 selectedItems = selection;
@@ -249,50 +264,12 @@ export class DownloadCommand {
         };
       }
 
-      // 2.6 Output Directory Prompt
-      let outputDirectory = options.output;
-
-      if (!outputDirectory) {
-        const useDefaultDir = await select<'yes' | 'no'>({
-          message: `Use default download directory? (${appConfig.outputDirectory})`,
-          choices: [
-            { name: 'Yes', value: 'yes' },
-            { name: 'No', value: 'no' },
-          ],
-        });
-
-        if (useDefaultDir === 'no') {
-          let valid = false;
-          while (!valid) {
-            outputDirectory = await input({
-              message: 'Enter custom output directory:',
-              validate: (val) => val.trim().length > 0 || 'Cannot be empty',
-            });
-            const dirValRes =
-              await this.directoryValidator.validate(outputDirectory);
-            if (dirValRes.ok) {
-              valid = true;
-            } else {
-              console.log(chalk.yellow(`\n⚠︎ ${dirValRes.error.message}`));
-            }
-          }
-        } else {
-          outputDirectory = appConfig.outputDirectory;
-        }
-      } else {
-        // Validate provided output directory
-        const dirValRes =
-          await this.directoryValidator.validate(outputDirectory);
-        if (!dirValRes.ok) {
-          console.log(
-            chalk.red(
-              `\n✘ Invalid output directory: ${dirValRes.error.message}`
-            )
-          );
-          return;
-        }
-      }
-      globalOverrides.outputDirectory = outputDirectory;
+      // 2.6 Output Path Resolution (non-interactive, deterministic)
+      const resolvedOutputPath = await this.outputPathResolver.resolve(
+        options.output,
+        appConfig.outputPath
+      );
+      globalOverrides.outputPath = resolvedOutputPath;
 
       // 3. Prompt for Preset or Custom
       const presets = this.presetRegistry.getAllPresets();
@@ -498,8 +475,8 @@ export class DownloadCommand {
       if (globalOverrides.playlist) {
         profile.playlist = globalOverrides.playlist;
       }
-      if (globalOverrides.outputDirectory) {
-        profile.outputDirectory = globalOverrides.outputDirectory;
+      if (globalOverrides.outputPath) {
+        profile.outputPath = globalOverrides.outputPath;
       }
       if (globalOverrides.useAria2) {
         profile.useAria2 = globalOverrides.useAria2;
@@ -522,7 +499,7 @@ export class DownloadCommand {
         });
         this.eventStream.emit({
           type: 'debug',
-          message: `output directory: ${profile.outputDirectory}`,
+          message: `output path: ${profile.outputPath}`,
         });
         this.eventStream.emit({
           type: 'debug',
@@ -559,7 +536,7 @@ export class DownloadCommand {
 
         if (res.ok) {
           const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `${checkSymbol} File saved to directory: ${profile.outputDirectory}`
+            ? `${checkSymbol} File saved to directory: ${profile.outputPath}`
             : `${checkSymbol} File saved to: ${resolvedFilename}`;
 
           console.log(chalk.green(saveMessage));
@@ -568,7 +545,7 @@ export class DownloadCommand {
         const res = await this.mp3Workflow.run(profile);
         if (res.ok) {
           const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `\n${checkSymbol} File saved to directory: ${profile.outputDirectory}`
+            ? `\n${checkSymbol} File saved to directory: ${profile.outputPath}`
             : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
 
           console.log(chalk.green(saveMessage));

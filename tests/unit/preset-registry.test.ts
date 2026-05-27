@@ -25,12 +25,11 @@ describe('PresetRegistry', () => {
     const baseProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video' as const,
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       subtitleOptions: { embedSubtitles: false, languages: [] },
       metadataOptions: { embedMetadata: false, embedThumbnail: false },
       playlist: { downloadAll: false },
-      useDownloadArchive: false,
     };
 
     const finalProfile = {

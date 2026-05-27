@@ -1,12 +1,14 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { ConfigService } from '../../core/config/config.service';
+import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
 import * as fs from 'fs';
 
 export class DoctorCommand {
   constructor(
     private processRunner: ProcessRunner,
-    private configService: ConfigService
+    private configService: ConfigService,
+    private outputPathResolver: OutputPathResolver
   ) {}
 
   /**
@@ -63,7 +65,8 @@ export class DoctorCommand {
   }
 
   private async checkDownloadDirectory(): Promise<void> {
-    const dir = this.configService.get('outputDirectory') || '.';
+    const rawDir = this.configService.get('outputPath') || '.';
+    const dir = this.outputPathResolver.normalizePath(rawDir);
     try {
       await fs.promises.access(dir, fs.constants.W_OK);
       console.log(`[✓] Download directory is writable: ${dir}`);

@@ -13,8 +13,10 @@ export const MetadataOptionsSchema = z.object({
 
 export const AppConfigSchema = z.object({
   version: z.number(),
-  outputDirectory: z.string(),
-  preferredBrowser: z.enum(['chrome', 'firefox', 'edge', 'brave', 'safari']).nullable(),
+  outputPath: z.string(),
+  preferredBrowser: z
+    .enum(['chrome', 'firefox', 'edge', 'brave', 'safari'])
+    .nullable(),
   preferredBitrate: z.union([
     z.literal(320),
     z.literal(256),
@@ -25,14 +27,16 @@ export const AppConfigSchema = z.object({
   subtitleOptions: SubtitleOptionsSchema,
   metadataOptions: MetadataOptionsSchema,
   defaultPreset: z.string(),
-  preferredVideoQuality: z.union([
-    z.literal(2160),
-    z.literal(1440),
-    z.literal(1080),
-    z.literal(720),
-    z.literal(480),
-    z.literal('best'),
-  ]).optional(),
+  preferredVideoQuality: z
+    .union([
+      z.literal(2160),
+      z.literal(1440),
+      z.literal(1080),
+      z.literal(720),
+      z.literal(480),
+      z.literal('best'),
+    ])
+    .optional(),
 });
 
 export type AppConfig = z.infer<typeof AppConfigSchema>;

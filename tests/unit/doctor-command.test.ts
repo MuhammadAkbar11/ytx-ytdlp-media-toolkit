@@ -4,9 +4,14 @@ import { describe, expect, test } from 'bun:test';
 import { DoctorCommand } from '../../src/cli/commands/doctor-command';
 import { ProcessRunner } from '../../src/infrastructure/process/process-runner';
 import { ConfigService } from '../../src/core/config/config.service';
+import { OutputPathResolver } from '../../src/core/filesystem/output-path-resolver';
 import * as fs from 'fs';
 
 describe('DoctorCommand', () => {
+  const mockOutputPathResolver = {
+    normalizePath: (p: string) => p,
+  } as any;
+
   test('should detect available dependencies', async () => {
     const mockProcessRunner = {
       run: async (command: string) => {
@@ -19,7 +24,11 @@ describe('DoctorCommand', () => {
       get: () => '.',
     } as any;
 
-    const command = new DoctorCommand(mockProcessRunner, mockConfigService);
+    const command = new DoctorCommand(
+      mockProcessRunner,
+      mockConfigService,
+      mockOutputPathResolver
+    );
 
     // Capture console.log
     const logs: string[] = [];
@@ -55,7 +64,11 @@ describe('DoctorCommand', () => {
       get: () => '.',
     } as any;
 
-    const command = new DoctorCommand(mockProcessRunner, mockConfigService);
+    const command = new DoctorCommand(
+      mockProcessRunner,
+      mockConfigService,
+      mockOutputPathResolver
+    );
 
     const logs: string[] = [];
     const originalLog = console.log;

@@ -8,13 +8,12 @@ describe('ProfileValidator', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = validator.validate(profile);
@@ -26,13 +25,12 @@ describe('ProfileValidator', () => {
     const profile: DownloadProfile = {
       url: '',
       mediaKind: 'video',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080,
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = validator.validate(profile);
@@ -48,13 +46,12 @@ describe('ProfileValidator', () => {
     const profile: DownloadProfile = {
       url: 'https://youtube.com/watch?v=123',
       mediaKind: 'audio',
-      outputDirectory: '.',
+      outputPath: '.',
       filenameTemplate: '%(title)s.%(ext)s',
       videoQuality: 1080, // Incompatible
       subtitleOptions: { mode: 'none', output: 'separate' },
       metadataOptions: { embedMetadata: false, embedThumbnail: false, embedChapters: false },
       playlist: { mode: 'entire_playlist' },
-      useDownloadArchive: false,
     };
 
     const res = validator.validate(profile);
