@@ -1,4 +1,4 @@
-import { DownloadProgress } from '../core/runtime/progress-parser';
+import { DownloadProgress } from '../core/runtime/progress-event-generator';
 
 export type DownloadEvent =
   | { type: 'started'; message?: string; estimatedSize?: string }

@@ -1,32 +1,75 @@
-import { DownloadProgress, ProgressParser } from './progress-parser';
-import { DownloadEvent } from '../../types/events';
+export interface DownloadProgress {
+  percentage?: number;
+  speed?: string;
+  eta?: string;
+  downloadedSize?: string;
+  totalSize?: string;
+}
 
 export class ProgressEventGenerator {
-  private parser = new ProgressParser();
   private lastProgress?: DownloadProgress;
 
   /**
-   * Processes a line and generates a progress event if it's a valid and new progress line.
-   * Returns null if the line is a duplicate or not a progress line.
-   *
-   * @param line The normalized runtime line.
-   * @returns A DownloadEvent or null if suppressed/invalid.
+   * Parses a progress line from yt-dlp and generates a progress event.
    */
-  generate(line: string): DownloadEvent | null {
-    const progress = this.parser.parse(line);
-    
-    // If no key fields were parsed, it's not a valid progress line for us
+  generate(
+    line: string
+  ): { type: 'progress'; progress: DownloadProgress } | null {
+    const progress = this.parse(line);
+
     if (progress.percentage === undefined && !progress.speed && !progress.eta) {
       return null;
     }
 
-    // Check for duplicates
     if (this.isDuplicate(progress)) {
       return null;
     }
 
     this.lastProgress = progress;
     return { type: 'progress', progress };
+  }
+
+  private parse(line: string): DownloadProgress {
+    const result: DownloadProgress = {};
+    const trimmed = line.trim();
+
+    const fullMatch = trimmed.match(
+      /\[download\]\s+(\d+\.\d+)%\s+of\s+([^\s]+)\s+at\s+([^\s]+)\s+ETA\s+([^\s]+)/
+    );
+    if (fullMatch) {
+      result.percentage = parseFloat(fullMatch[1]);
+      result.totalSize = fullMatch[2];
+      result.speed = fullMatch[3];
+      result.eta = fullMatch[4];
+      return result;
+    }
+
+    const sizeMatch = trimmed.match(
+      /\[download\]\s+([^\s]+)\s+at\s+([^\s]+)\s+ETA\s+([^\s]+)/
+    );
+    if (sizeMatch && !sizeMatch[1].includes('%')) {
+      result.downloadedSize = sizeMatch[1];
+      result.speed = sizeMatch[2];
+      result.eta = sizeMatch[3];
+      return result;
+    }
+
+    const percentageMatch = trimmed.match(/(\d+\.\d+)%/);
+    if (percentageMatch) {
+      result.percentage = parseFloat(percentageMatch[1]);
+    }
+
+    const speedMatch = trimmed.match(/at\s+([^\s]+)/);
+    if (speedMatch) {
+      result.speed = speedMatch[1];
+    }
+
+    const etaMatch = trimmed.match(/ETA\s+([^\s]+)/);
+    if (etaMatch) {
+      result.eta = etaMatch[1];
+    }
+
+    return result;
   }
 
   private isDuplicate(current: DownloadProgress): boolean {
