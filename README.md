@@ -1,130 +1,185 @@
 # ytx
 
-A modern CLI tool for downloading YouTube videos using yt-dlp, built with Bun and TypeScript.
-
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-  - [Download Videos](#download-videos)
-  - [Manage Configuration](#manage-configuration)
-  - [Use Presets](#use-presets)
-  - [Run Diagnostics](#run-diagnostics)
-- [Supported Platforms](#supported-platforms)
-- [Prerequisites](#prerequisites)
-- [Development](#development)
-- [Testing](#testing)
-- [License](#license)
+A modern, interactive CLI for downloading YouTube videos and audio using yt-dlp. Built with [Bun](https://bun.sh/) and TypeScript. **Linux only.**
 
 ## Features
 
-- **Interactive CLI**: Guided workflow with prompts and confirmations for a seamless user experience.
-- **Cookie Support**: Utilize browser cookies to download age-restricted or private videos.
-- **Profile Management**: Save and reuse your favorite download settings as profiles for quick access.
-- **Smart Configuration**: Automatically detects and suggests optimal format combinations for the best quality.
-- **Progress Tracking**: Real-time updates on download progress and status.
-- **Process Management**: Graceful handling of interrupted downloads, allowing for resume capabilities.
-- **Doctor Command**: Built-in health checks for dependencies, configuration, and download directories to ensure smooth operation.
-- **Flexible Download Options**: Support for various download scenarios including single videos, playlists, MP3 audio, MP4 video, and subtitles.
-- **Archiving**: Keep track of downloaded videos to prevent re-downloading.
+- **Interactive guided workflow** — prompts for format, quality, subtitles, metadata, and more
+- **MP4 video downloads** — with automatic audio/video merging via ffmpeg
+- **MP3 audio extraction** — configurable bitrate (128/192/256/320 kbps)
+- **Playlist support** — download entire playlists, first item, or select specific items with fuzzy search
+- **Browser cookie support** — download age-restricted or private content using cookies from Chrome, Firefox, Edge, Brave, or Safari
+- **Presets** — save and reuse download configurations (balanced, best quality, audio only, etc.)
+- **Subtitles** — download and embed or save as separate files
+- **Metadata embedding** — embed metadata, thumbnails, and chapters into output files
+- **Dry-run mode** — preview resolved yt-dlp arguments without downloading
+- **Filename preview** — see predicted output filename before downloading
+- **Artifact size estimation** — estimated file size based on bitrate and duration
+- **aria2 support** — optional multi-threaded downloading via aria2
+- **Doctor command** — check runtime dependencies and configuration health
+- **XDG-compliant config** — stored at `~/.config/ytx-downloader/config.json`
+- **Graceful shutdown** — clean process termination on Ctrl+C
+
+## Supported Platforms
+
+**Linux only.** This tool is designed and tested exclusively for Linux environments.
+
+## Prerequisites
+
+| Dependency | Required | Purpose |
+|---|---|---|
+| [Bun](https://bun.sh/) | Yes | JavaScript runtime |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Yes | Download engine |
+| [ffmpeg](https://ffmpeg.org/) | Yes | Format merging and audio extraction |
+| [aria2](https://aria2.github.io/) | Optional | Faster multi-threaded downloads |
+
+All dependencies must be available in your system `PATH`.
 
 ## Installation
 
-Please refer to the [Linux Installation and Runtime Setup Guide](docs/installation.md) for detailed instructions on how to install `ytx` and its dependencies on various Linux distributions.
+See the [Linux Installation Guide](docs/installation.md) for detailed per-distribution instructions.
 
-For a quick setup from the repository:
+### Quick Start
 
 ```bash
-git clone https://github.com/your-repo/ytx.git
-cd ytx
+# 1. Install Bun
+curl -fsSL https://bun.sh/install | bash
+
+# 2. Clone and install
+git clone https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit.git
+cd ytx-ytdlp-media-toolkit
 bun install
+
+# 3. Link the CLI globally
 bun link
+
+# 4. Verify installation
+ytx --help
+ytx doctor
 ```
+
+Make sure `~/.bun/bin` is in your `PATH`:
+
+```bash
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+Add the line above to your `~/.bashrc` or `~/.zshrc` to make it permanent.
 
 ## Usage
 
-### Download Videos
-
-To download a video, simply run:
+### Download a Video
 
 ```bash
+# Interactive mode — guided prompts for format, quality, etc.
 ytx download <URL>
-```
 
-The CLI will guide you through the available options.
+# Audio-only (MP3)
+ytx download <URL> --audio
+
+# Video with specific quality
+ytx download <URL> --video --quality 720
+
+# Use browser cookies for restricted content
+ytx download <URL> --browser firefox
+
+# Dry-run — preview without downloading
+ytx download <URL> --dry-run
+```
 
 ### Manage Configuration
 
-View and manage `ytx`'s configuration:
-
 ```bash
-ytx config
+# View all config
+ytx config get outputPath
+
+# Set a value
+ytx config set outputPath ~/Videos
+
+# List current configuration
+ytx config list
+
+# Reset to defaults
+ytx config reset
 ```
 
 ### Use Presets
 
-Save and use custom download presets:
-
 ```bash
-ytx preset
+# List available presets
+ytx preset list
+
+# Show preset details
+ytx preset show balanced
+
+# Set a default preset
+ytx preset use balanced
 ```
 
 ### Run Diagnostics
-
-Check your environment and dependencies:
 
 ```bash
 ytx doctor
 ```
 
-## Supported Platforms
+Checks for yt-dlp, ffmpeg, aria2, config accessibility, and output directory writability.
 
-- **Linux**: This tool is officially supported and optimized for Linux environments.
+## Runtime Configuration
 
-## Prerequisites
+Configuration is stored at:
 
-Before using `ytx`, ensure you have the following installed and available in your system's PATH:
+```
+$XDG_CONFIG_HOME/ytx-downloader/config.json
+```
 
-- [Bun](https://bun.sh/): JavaScript runtime and package manager.
-- `yt-dlp`: Command-line program to download videos from YouTube and other video sites.
-- `ffmpeg`: A complete, cross-platform solution to record, convert and stream audio and video.
+Falls back to `~/.config/ytx-downloader/config.json` if `XDG_CONFIG_HOME` is not set.
+
+### Output Path Resolution
+
+Output paths are resolved in this order:
+
+1. `--output` CLI flag
+2. `outputPath` from config
+3. `~/Downloads` fallback
+
+Paths are normalized (tilde expansion, relative-to-absolute) and validated (exists, writable, is directory). Invalid paths fall through to the next option automatically.
 
 ## Development
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/your-repo/ytx.git
-   cd ytx
-   ```
-2. Install dependencies:
-   ```bash
-   bun install
-   ```
-3. Run the application in development mode:
-   ```bash
-   bun run dev
-   ```
-
-## Testing
-
-The project uses Bun's built-in test runner. Tests are organized into:
-
-- `tests/unit/`: For unit tests of pure logic.
-- `tests/integration/`: For tests that interact with external systems or infrastructure.
-
-To run tests:
-
 ```bash
-bun test
+# Clone
+git clone https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit.git
+cd ytx-ytdlp-media-toolkit
+
+# Install dependencies
+bun install
+
+# Run in dev mode
+bun run dev
+
+# Run with hot-reload
+bun run dev:hot
 ```
 
-To run tests in watch mode:
+### Testing
 
 ```bash
+# Run all tests
+bun test
+
+# Run in watch mode
 bun test --watch
+```
+
+### Linting and Formatting
+
+```bash
+bun run lint
+bun run lint:fix
+bun run format
+bun run format:check
 ```
 
 ## License
 
-MIT
+[MIT](LICENSE)

@@ -1,9 +1,33 @@
 {
   "name": "ytx",
   "version": "0.1.0",
-  "description": "A CLI tool for downloading YouTube videos using yt-dlp",
+  "description": "A modern, interactive Linux-only CLI for downloading YouTube videos and audio using yt-dlp",
   "main": "src/index.ts",
   "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit.git"
+  },
+  "bugs": {
+    "url": "https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit/issues"
+  },
+  "homepage": "https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit#readme",
+  "keywords": [
+    "youtube",
+    "yt-dlp",
+    "downloader",
+    "video",
+    "audio",
+    "mp3",
+    "mp4",
+    "cli",
+    "bun",
+    "linux"
+  ],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
   "scripts": {
     "dev": "bun run src/index.ts",
     "dev:hot": "bun --watch --hot run src/index.ts",
@@ -14,8 +38,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "test": "bun test",
-    "test:watch": "bun test --watch",
-    "xlink": "bun unlink && bun link"
+    "test:watch": "bun test --watch"
   },
   "bin": {
     "ytx": "./src/index.ts"
@@ -23,6 +46,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/bun": "^1.3.13",
+    "@types/cli-progress": "^3.11.6",
     "@typescript-eslint/eslint-plugin": "^8.59.2",
     "@typescript-eslint/parser": "^8.59.2",
     "eslint": "^10.3.0",
@@ -33,7 +57,6 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^8.4.2",
-    "@types/cli-progress": "^3.11.6",
     "chalk": "^5.6.2",
     "cli-progress": "^3.12.0",
     "commander": "^14.0.3",

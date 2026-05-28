@@ -1,35 +1,32 @@
-# Linux Installation and Runtime Setup Guide
+# Linux Installation Guide
 
-This guide provides instructions for setting up the `ytx` runtime environment on Linux.
+This guide covers installing `ytx` and its dependencies on Linux.
 
-## Prerequisites
+`ytx` is **Linux-only** by design.
 
-The project officially targets **Linux-only** runtime support. Ensure you are running a modern Linux distribution.
-
-### 1. Install Bun
-
-`ytx` is built with Bun. Install it using the official script:
+## 1. Install Bun
 
 ```bash
 curl -fsSL https://bun.sh/install | bash
 ```
 
-Restart your terminal or source your profile to make `bun` available in your PATH.
+Restart your terminal or run `source ~/.bashrc` (or `source ~/.zshrc`) to add Bun to your PATH.
 
-### 2. Install yt-dlp
+Verify:
 
-`yt-dlp` is the core engine for downloading. We recommend installing it via your package manager or directly from the source to ensure you have the latest version.
-
-**Ubuntu/Debian:**
 ```bash
-sudo apt update
-sudo apt install yt-dlp
+bun --version
 ```
-*Note: The version in apt might be outdated. If you encounter issues, install it via pip or direct download.*
 
-**Arch Linux:**
+## 2. Install yt-dlp
+
+`yt-dlp` is the download engine. Install via your package manager or pip.
+
+### Package Manager (recommended)
+
+**Debian / Ubuntu:**
 ```bash
-sudo pacman -S yt-dlp
+sudo apt update && sudo apt install yt-dlp
 ```
 
 **Fedora:**
@@ -37,18 +34,37 @@ sudo pacman -S yt-dlp
 sudo dnf install yt-dlp
 ```
 
-### 3. Install FFmpeg
-
-FFmpeg is required for merging formats and extracting audio.
-
-**Ubuntu/Debian:**
-```bash
-sudo apt install ffmpeg
-```
-
 **Arch Linux:**
 ```bash
-sudo pacman -S ffmpeg
+sudo pacman -S yt-dlp
+```
+
+### pip (if packaged version is outdated)
+
+```bash
+pip install --upgrade yt-dlp
+```
+
+### Standalone Binary
+
+```bash
+sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+sudo chmod a+rx /usr/local/bin/yt-dlp
+```
+
+Verify:
+
+```bash
+yt-dlp --version
+```
+
+## 3. Install ffmpeg
+
+Required for merging video/audio streams and extracting audio.
+
+**Debian / Ubuntu:**
+```bash
+sudo apt install ffmpeg
 ```
 
 **Fedora:**
@@ -56,18 +72,24 @@ sudo pacman -S ffmpeg
 sudo dnf install ffmpeg
 ```
 
-### 4. Install aria2 (Optional but Recommended)
-
-`aria2` is used as an external downloader by `yt-dlp` for faster multi-threaded downloads.
-
-**Ubuntu/Debian:**
-```bash
-sudo apt install aria2
-```
-
 **Arch Linux:**
 ```bash
-sudo pacman -S aria2
+sudo pacman -S ffmpeg
+```
+
+Verify:
+
+```bash
+ffmpeg -version
+```
+
+## 4. Install aria2 (optional)
+
+Enables faster multi-threaded downloads when enabled via config or CLI flag.
+
+**Debian / Ubuntu:**
+```bash
+sudo apt install aria2
 ```
 
 **Fedora:**
@@ -75,56 +97,96 @@ sudo pacman -S aria2
 sudo dnf install aria2
 ```
 
-## Project Setup
-
-### 1. Clone the Repository
-
+**Arch Linux:**
 ```bash
-git clone https://github.com/your-repo/yt-downloader.git
-cd yt-downloader
+sudo pacman -S aria2
 ```
 
-### 2. Install Node Dependencies
+Verify:
 
 ```bash
+aria2c --version
+```
+
+## 5. Install ytx
+
+```bash
+git clone https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit.git
+cd ytx-ytdlp-media-toolkit
 bun install
-```
-
-### 3. Link the CLI
-
-To use the `ytx` command globally:
-
-```bash
 bun link
 ```
 
-Ensure that Bun's global bin directory is in your PATH. Usually, it is `~/.bun/bin`.
-Add this to your `~/.bashrc` or `~/.zshrc` if not present:
+Ensure `~/.bun/bin` is in your PATH:
 
 ```bash
 export PATH="$HOME/.bun/bin:$PATH"
 ```
 
-## Verification
+Add the line to `~/.bashrc` or `~/.zshrc` to make it permanent.
 
-Verify that everything is installed correctly:
+## 6. Verify Installation
 
 ```bash
 ytx --help
-```
-
-You can also use the built-in doctor command to check dependencies:
-```bash
 ytx doctor
 ```
 
+`ytx doctor` checks for yt-dlp, ffmpeg, aria2, config accessibility, and output directory writability.
+
+## Runtime Configuration
+
+Configuration is stored at:
+
+```
+$XDG_CONFIG_HOME/ytx-downloader/config.json
+```
+
+Falls back to `~/.config/ytx-downloader/config.json` if `XDG_CONFIG_HOME` is not set.
+
+### Output Path Resolution
+
+The output directory for downloads is resolved in this order:
+
+1. `--output <path>` CLI flag
+2. `outputPath` value from config file
+3. `~/Downloads` fallback
+
+Invalid paths (non-existent, not writable, not a directory) are skipped automatically and the next option is tried.
+
 ## Troubleshooting
 
-### PATH Issues
-If the `ytx` command is not found after `bun link`, ensure `~/.bun/bin` is in your PATH.
+### `ytx` command not found
 
-### Missing Dependencies
-If `ytx` warns about missing `yt-dlp` or `ffmpeg`, ensure they are installed and executable from your terminal.
+Ensure `~/.bun/bin` is in your PATH:
 
-### Browser Cookies
-For downloading age-restricted or private videos, you may need to pass cookies from your browser. Ensure your browser is supported (Chrome, Firefox, Edge, Brave, Safari) and use the `--browser` flag or configure it in settings.
+```bash
+export PATH="$HOME/.bun/bin:$PATH"
+```
+
+### Missing dependencies
+
+Run `ytx doctor` to identify which dependencies are missing or not on PATH.
+
+### Browser cookies not working
+
+Some content requires authentication. Pass browser cookies explicitly:
+
+```bash
+ytx download <URL> --browser firefox
+```
+
+Supported browsers: chrome, firefox, edge, brave, safari.
+
+### yt-dlp errors
+
+Update yt-dlp to the latest version:
+
+```bash
+yt-dlp --update
+```
+
+Or via pip:
+
+```bash
+pip install --upgrade yt-dlp

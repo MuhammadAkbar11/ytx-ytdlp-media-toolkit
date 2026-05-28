@@ -1,4 +1,4 @@
-# Dependency directories
+# Dependencies
 node_modules/
 
 # Build output
@@ -9,8 +9,31 @@ dist/
 
 # OS files
 .DS_Store
+Thumbs.db
 
-# Dev folder
+# Editors / IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+
+# Bun
+.bun/
+
+# Dev / internal folders
 .dev/
 .agents/
 *archive.*
+
+# Coverage
+coverage/
+.lcov
+
+# Temporary files
+tmp/
+*.tmp
+test-inquirer.ts
