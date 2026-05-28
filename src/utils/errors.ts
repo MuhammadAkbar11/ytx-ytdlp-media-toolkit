@@ -1,4 +1,9 @@
-import { AppError, AppErrorCode, Recoverability, ErrorCategory } from '../types/errors';
+import {
+  AppError,
+  AppErrorCode,
+  Recoverability,
+  ErrorCategory,
+} from '../types/errors';
 
 export function createAppError(
   code: AppErrorCode,

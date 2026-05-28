@@ -26,12 +26,12 @@ A modern, interactive CLI for downloading YouTube videos and audio using yt-dlp.
 
 ## Prerequisites
 
-| Dependency | Required | Purpose |
-|---|---|---|
-| [Bun](https://bun.sh/) | Yes | JavaScript runtime |
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Yes | Download engine |
-| [ffmpeg](https://ffmpeg.org/) | Yes | Format merging and audio extraction |
-| [aria2](https://aria2.github.io/) | Optional | Faster multi-threaded downloads |
+| Dependency                                 | Required | Purpose                             |
+| ------------------------------------------ | -------- | ----------------------------------- |
+| [Bun](https://bun.sh/)                     | Yes      | JavaScript runtime                  |
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Yes      | Download engine                     |
+| [ffmpeg](https://ffmpeg.org/)              | Yes      | Format merging and audio extraction |
+| [aria2](https://aria2.github.io/)          | Optional | Faster multi-threaded downloads     |
 
 All dependencies must be available in your system `PATH`.
 
@@ -138,11 +138,11 @@ Falls back to `~/.config/ytx-downloader/config.json` if `XDG_CONFIG_HOME` is not
 
 Output paths are resolved in this order:
 
-| Priority | Source | Example |
-|---|---|---|
-| 1 | `--output <dir>` CLI flag | `ytx download <URL> --output ~/Videos` |
-| 2 | `outputPath` in config | `ytx config set outputPath ~/Videos` |
-| 3 | `~/Downloads` fallback | auto-applied if above are invalid or unset |
+| Priority | Source                    | Example                                    |
+| -------- | ------------------------- | ------------------------------------------ |
+| 1        | `--output <dir>` CLI flag | `ytx download <URL> --output ~/Videos`     |
+| 2        | `outputPath` in config    | `ytx config set outputPath ~/Videos`       |
+| 3        | `~/Downloads` fallback    | auto-applied if above are invalid or unset |
 
 Paths are normalized (~ expansion → absolute) and validated (exists + writable + is directory). Invalid paths fall through silently to the next option.
 
@@ -207,10 +207,10 @@ Config migration is **fully automatic** — no commands or manual steps required
 
 When you run any `ytx` command, the config file is loaded and its version is checked. If an older config version is detected, the migration chain runs before the command executes:
 
-| Migration | What it does |
-|---|---|
-| v1 → v2 | Version bump (no data changes) |
-| v2 → v3 | Renames the `outputDirectory` key to `outputPath` |
+| Migration | What it does                                      |
+| --------- | ------------------------------------------------- |
+| v1 → v2   | Version bump (no data changes)                    |
+| v2 → v3   | Renames the `outputDirectory` key to `outputPath` |
 
 For example, if your config file still has the old `outputDirectory` field:
 

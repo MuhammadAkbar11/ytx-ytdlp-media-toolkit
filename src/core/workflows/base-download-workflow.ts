@@ -9,26 +9,23 @@ import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { ProcessExecutionResult } from '../../types/process';
 import { EventStream } from '../runtime/event-stream';
 import { ArtifactSizeEstimator } from '../runtime/artifact-size-estimator';
+import { FailureClassifier } from '../errors/failure-classifier';
 
 export class BaseDownloadWorkflow {
+  private failureClassifier: FailureClassifier;
+
   constructor(
     protected profileValidator: ProfileValidator,
     protected argumentBuilder: ArgumentBuilder,
     protected processRunner: ProcessRunner,
     protected eventStream: EventStream
-  ) {}
+  ) {
+    this.failureClassifier = new FailureClassifier();
+  }
 
-  /**
-   * Runs the download workflow.
-   * Validates the profile, builds arguments, and executes yt-dlp with event streaming.
-   *
-   * @param profile The download profile to execute.
-   * @returns A Result containing the ProcessExecutionResult or a list of validation issues.
-   */
   async run(
     profile: DownloadProfile
   ): Promise<Result<ProcessExecutionResult, ValidationIssue[]>> {
-    // 1. Validate Profile
     const valRes = this.profileValidator.validate(profile);
     if (!valRes.ok) {
       const issueMessages = valRes.error.map((i) => i.message).join('; ');
@@ -39,14 +36,12 @@ export class BaseDownloadWorkflow {
       return fail(valRes.error);
     }
 
-    // 2. Build Arguments
     const args = this.argumentBuilder.build(profile);
     this.eventStream.emit({
       type: 'debug',
       message: `yt-dlp args: ${args.join(' ')}`,
     });
 
-    // 3. Emit started event
     const estimator = new ArtifactSizeEstimator();
     this.eventStream.emit({
       type: 'started',
@@ -58,7 +53,6 @@ export class BaseDownloadWorkflow {
         : undefined,
     });
 
-    // 4. Execute yt-dlp
     const stderrLines: string[] = [];
     try {
       const result = await this.processRunner.run('yt-dlp', args, {
@@ -72,20 +66,18 @@ export class BaseDownloadWorkflow {
       });
 
       if (result.exitCode !== 0) {
-        const lastError = stderrLines[stderrLines.length - 1] || '';
-        const errorDetail = lastError
-          ? `: ${lastError}`
-          : stderrLines.length > 0
-            ? `: ${stderrLines[stderrLines.length - 1]}`
-            : '';
+        const classified = this.failureClassifier.classifyFromProcessResult(
+          result,
+          'yt-dlp'
+        );
         this.eventStream.emit({
           type: 'failed',
-          error: `yt-dlp failed with exit code ${result.exitCode}${errorDetail}`,
+          error: classified.summary,
         });
         return fail([
           {
-            category: 'workflow-conflicts',
-            message: `yt-dlp failed with exit code ${result.exitCode}${errorDetail}`,
+            category: 'workflow-conflicts' as const,
+            message: classified.summary,
           },
         ]);
       }
@@ -93,15 +85,15 @@ export class BaseDownloadWorkflow {
       this.eventStream.emit({ type: 'completed' });
       return ok(result);
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
+      const classified = this.failureClassifier.classifyFromError(e);
       this.eventStream.emit({
         type: 'failed',
-        error: `Failed to execute yt-dlp: ${errorMsg}`,
+        error: classified.summary,
       });
       return fail([
         {
-          category: 'workflow-conflicts',
-          message: `Failed to execute yt-dlp: ${errorMsg}`,
+          category: 'workflow-conflicts' as const,
+          message: classified.summary,
         },
       ]);
     }

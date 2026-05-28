@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { constants } from 'fs';
 import { access, stat } from 'fs/promises';
 import { Result, ok, fail } from '../../utils/result';
@@ -16,38 +15,39 @@ export class DirectoryValidator {
             'OUTPUT_NOT_WRITABLE',
             `Path is not a directory: ${path}`,
             'fatal',
-            'validation'
+            'filesystem'
           )
         );
       }
       return ok(path);
-    } catch (e: any) {
-      if (e.code === 'ENOENT') {
+    } catch (e: unknown) {
+      const err = e as { code?: string; message?: string };
+      if (err.code === 'ENOENT') {
         return fail(
           createAppError(
             'OUTPUT_NOT_WRITABLE',
             `Directory does not exist: ${path}`,
             'retryable',
-            'validation'
+            'filesystem'
           )
         );
       }
-      if (e.code === 'EACCES') {
+      if (err.code === 'EACCES') {
         return fail(
           createAppError(
             'OUTPUT_NOT_WRITABLE',
-            `Directory is not writable: ${path}`,
+            `Permission denied: ${path}`,
             'retryable',
-            'validation'
+            'filesystem'
           )
         );
       }
       return fail(
         createAppError(
           'OUTPUT_NOT_WRITABLE',
-          `Failed to validate directory: ${e.message}`,
+          `Cannot access directory: ${path}`,
           'fatal',
-          'validation',
+          'filesystem',
           e
         )
       );

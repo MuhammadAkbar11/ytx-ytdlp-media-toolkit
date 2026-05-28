@@ -2,54 +2,121 @@ import { AppError } from '../../types/errors';
 
 export interface RecoverySuggestion {
   text: string;
-  action?: string; // Optional command to run or action to take
+  action?: string;
 }
 
 export class RecoveryResolver {
-  /**
-   * Resolves an AppError to a list of recovery suggestions.
-   * 
-   * @param error The AppError.
-   * @returns An array of RecoverySuggestion.
-   */
   resolve(error: AppError): RecoverySuggestion[] {
     switch (error.code) {
       case 'MISSING_YTDLP':
         return [
-          { text: 'Verify yt-dlp is available in your PATH.' },
-          { text: 'Install yt-dlp using your package manager or download it directly.' },
+          { text: 'Install yt-dlp and ensure it is available in PATH.' },
+          { text: 'On Ubuntu/Debian: pip install yt-dlp' },
+          { text: 'Verify with: ytx doctor' },
         ];
       case 'MISSING_FFMPEG':
         return [
-          { text: 'Install ffmpeg and retry.' },
+          { text: 'Install ffmpeg and ensure it is available in PATH.' },
           { text: 'On Ubuntu/Debian: sudo apt install ffmpeg' },
-          { text: 'On macOS: brew install ffmpeg' },
+          { text: 'On Fedora: sudo dnf install ffmpeg' },
         ];
       case 'INVALID_URL':
         return [
-          { text: 'Verify the URL is correct and accessible.' },
-          { text: 'Ensure the platform is supported by yt-dlp.' },
+          { text: 'Verify the URL is a valid YouTube link.' },
+          {
+            text: 'Supported formats: youtube.com/watch, youtu.be, youtube.com/playlist, youtube.com/shorts',
+          },
         ];
       case 'INVALID_CONFIG':
         return [
-          { text: 'Check your configuration for invalid values.' },
-          { text: 'You can reset the configuration to defaults using: ytx config reset' },
+          { text: 'Reset configuration to defaults:' },
+          { text: '  ytx config reset' },
         ];
       case 'OUTPUT_NOT_WRITABLE':
         return [
-          { text: 'Check download directory permissions.' },
-          { text: 'Ensure you have write access to the configured output directory.' },
+          { text: 'Check that the output directory exists and is writable.' },
+          { text: 'You can specify a different directory with --output <dir>' },
         ];
       case 'DOWNLOAD_FAILED':
         return [
-          { text: 'The download failed. Check network connectivity or video availability.' },
-          { text: 'Try running with --verbose or --debug for more details.' },
+          {
+            text: 'Check your network connection and verify the video is still available.',
+          },
+          { text: 'Run with --verbose for more details.' },
+        ];
+      case 'UNSUPPORTED_BROWSER':
+        return [
+          {
+            text: 'Use a supported browser for cookie extraction: chrome, firefox, brave, edge, safari',
+          },
+        ];
+      case 'PERMISSION_DENIED':
+        return [
+          { text: 'Check file and directory permissions for the output path.' },
+          { text: 'Ensure you have write access to the target directory.' },
+        ];
+      case 'DISK_FULL':
+        return [
+          { text: 'Free up disk space and try again.' },
+          { text: 'Check available space with: df -h' },
+        ];
+      case 'NETWORK_ERROR':
+        return [
+          { text: 'Check your internet connection.' },
+          {
+            text: 'The server may be temporarily unavailable. Try again in a few moments.',
+          },
+        ];
+      case 'AUTH_REQUIRED':
+        return [
+          { text: 'This content requires authentication.' },
+          { text: 'Try enabling browser cookies:' },
+          { text: '  ytx <url> --browser firefox' },
+        ];
+      case 'CONTENT_UNAVAILABLE':
+        return [
+          {
+            text: 'The video may have been removed, made private, or is region-locked.',
+          },
+          { text: 'Verify the URL and try accessing it in a browser.' },
+        ];
+      case 'UNSUPPORTED_URL':
+        return [
+          {
+            text: 'Ensure the URL points to a supported YouTube video, playlist, or short.',
+          },
+        ];
+      case 'PLAYLIST_ERROR':
+        return [
+          { text: 'The playlist may be private, invalid, or empty.' },
+          {
+            text: 'Try accessing it in a browser or with --browser <name> for authenticated access.',
+          },
+        ];
+      case 'ARIA2_FAILED':
+        return [
+          { text: 'Ensure aria2 is installed and available in PATH.' },
+          { text: 'On Ubuntu/Debian: sudo apt install aria2' },
+          { text: 'Or try downloading without --aria2.' },
+        ];
+      case 'PROCESS_SPAWN_FAILED':
+        return [
+          { text: 'A required tool was not found on your system.' },
+          { text: 'Run ytx doctor to check all dependencies.' },
+        ];
+      case 'FFMPEG_FAILED':
+        return [
+          { text: 'Ensure ffmpeg is installed and available in PATH.' },
+          { text: 'On Ubuntu/Debian: sudo apt install ffmpeg' },
+        ];
+      case 'RATE_LIMITED':
+        return [
+          {
+            text: 'You are being rate-limited. Wait a few minutes and try again.',
+          },
         ];
       default:
-        return [
-          { text: 'No specific recovery suggestion available for this error.' },
-          { text: 'Try running with --verbose or --debug for more details.' },
-        ];
+        return [{ text: 'Run with --verbose for more details.' }];
     }
   }
 }

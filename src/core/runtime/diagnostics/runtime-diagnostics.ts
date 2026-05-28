@@ -8,7 +8,9 @@ export class RuntimeDiagnostics {
    */
   enable(): void {
     this.enabled = true;
-    console.log(chalk.magenta('🔍 [diagnostics] Runtime diagnostics mode enabled'));
+    console.log(
+      chalk.magenta('🔍 [diagnostics] Runtime diagnostics mode enabled')
+    );
   }
 
   /**
@@ -28,9 +30,7 @@ export class RuntimeDiagnostics {
     if (!this.enabled) return;
 
     const timestamp = new Date().toISOString().substring(11, 23); // Just time for readability
-    console.log(
-      chalk.magenta(` [${category}] [${timestamp}] ${message}`)
-    );
+    console.log(chalk.magenta(` [${category}] [${timestamp}] ${message}`));
   }
 }
 

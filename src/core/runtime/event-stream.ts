@@ -30,7 +30,10 @@ export class EventStream {
       try {
         subscriber(event);
       } catch (error) {
-        const errorMessage = error instanceof Error ? `${error.message}\n${error.stack}` : String(error);
+        const errorMessage =
+          error instanceof Error
+            ? `${error.message}\n${error.stack}`
+            : String(error);
         runtimeDiagnostics.log('error', `Subscriber failure: ${errorMessage}`);
       }
     }
@@ -43,7 +46,10 @@ export class EventStream {
    */
   processLine(line: string): void {
     const classified = this.classifier.classify(line);
-    runtimeDiagnostics.log('parsed', `Classified [${classified.type}] line: ${line}`);
+    runtimeDiagnostics.log(
+      'parsed',
+      `Classified [${classified.type}] line: ${line}`
+    );
 
     switch (classified.type) {
       case 'progress': {
@@ -53,15 +59,25 @@ export class EventStream {
         }
         break;
       }
-      case 'warning':
-        this.emit({ type: 'warning', message: line.replace(/^WARNING:/, '').trim() });
+      case 'warning': {
+        const warningText = line.replace(/^WARNING:\s*/, '').trim();
+        if (warningText) {
+          this.emit({ type: 'warning', message: warningText });
+        }
         break;
-      case 'error':
-        this.emit({ type: 'error', message: line.replace(/^ERROR:/, '').trim() });
+      }
+      case 'error': {
+        const errorText = line.replace(/^ERROR:\s*/, '').trim();
+        if (errorText) {
+          this.emit({ type: 'error', message: errorText });
+        }
         break;
+      }
       case 'info': {
         const trimmed = line.trim();
-        const itemMatch = trimmed.match(/\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/);
+        const itemMatch = trimmed.match(
+          /\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/
+        );
         if (itemMatch) {
           this.emit({
             type: 'item-started',
@@ -69,19 +85,37 @@ export class EventStream {
             totalItems: parseInt(itemMatch[2], 10),
           });
         } else if (trimmed.startsWith('[Merger]')) {
-          this.emit({ type: 'processing', action: 'Merging video and audio formats...' });
+          this.emit({
+            type: 'processing',
+            action: 'Merging video and audio formats...',
+          });
         } else if (trimmed.startsWith('[ExtractAudio]')) {
-          this.emit({ type: 'processing', action: 'Extracting and converting audio...' });
+          this.emit({
+            type: 'processing',
+            action: 'Extracting and converting audio...',
+          });
         } else if (trimmed.startsWith('[Metadata]')) {
           this.emit({ type: 'processing', action: 'Embedding metadata...' });
         } else if (trimmed.startsWith('[Thumbnails]')) {
           this.emit({ type: 'processing', action: 'Embedding thumbnail...' });
         } else if (trimmed.startsWith('[VideoConvertor]')) {
-          this.emit({ type: 'processing', action: 'Converting video format...' });
+          this.emit({
+            type: 'processing',
+            action: 'Converting video format...',
+          });
         } else if (trimmed.startsWith('[Fixup')) {
-          this.emit({ type: 'processing', action: 'Correcting container structure...' });
-        } else if (trimmed.toLowerCase().includes('post-processing') || trimmed.toLowerCase().includes('postprocess')) {
-          this.emit({ type: 'processing', action: 'Running post-download tasks...' });
+          this.emit({
+            type: 'processing',
+            action: 'Correcting container structure...',
+          });
+        } else if (
+          trimmed.toLowerCase().includes('post-processing') ||
+          trimmed.toLowerCase().includes('postprocess')
+        ) {
+          this.emit({
+            type: 'processing',
+            action: 'Running post-download tasks...',
+          });
         }
         break;
       }

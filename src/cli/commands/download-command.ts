@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { input, select } from '@inquirer/prompts';
 import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
@@ -24,6 +23,8 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { gracefulShutdownManager } from '../../core/runtime/graceful-shutdown';
 import { runtimeEnvironment } from '../../core/runtime/runtime-environment';
+import { FailureClassifier } from '../../core/errors/failure-classifier';
+import { DiagnosticFormatter } from '../../core/errors/diagnostic-formatter';
 import {
   AudioBitrate,
   DownloadProfile,
@@ -46,6 +47,9 @@ export interface DownloadOptions {
 }
 
 export class DownloadCommand {
+  private failureClassifier: FailureClassifier;
+  private diagnosticFormatter: DiagnosticFormatter;
+
   constructor(
     private inspectionService: InspectionService,
     private mp4Workflow: Mp4DownloadWorkflow,
@@ -61,7 +65,10 @@ export class DownloadCommand {
     private runtimePreflightResolver: RuntimePreflightResolver,
     private playlistInspector: PlaylistInspector,
     private searchablePlaylistSelector: SearchablePlaylistSelector
-  ) {}
+  ) {
+    this.failureClassifier = new FailureClassifier();
+    this.diagnosticFormatter = new DiagnosticFormatter();
+  }
 
   async execute(
     initialUrl?: string,
@@ -76,9 +83,8 @@ export class DownloadCommand {
       let url = initialUrl;
       if (!url) {
         if (!runtimeEnvironment.isInteractive) {
-          console.log(
-            chalk.red('✘ Error: URL is required in non-interactive mode.')
-          );
+          console.log(chalk.red('✘ URL is required in non-interactive mode.'));
+          console.log(chalk.yellow('\n  Usage: ytx <url>'));
           return;
         }
         url = await input({
@@ -89,6 +95,11 @@ export class DownloadCommand {
         const valRes = validateUrl(url);
         if (!valRes.ok) {
           console.log(chalk.red('✘ Invalid URL provided.'));
+          console.log(
+            chalk.yellow(
+              '\nSupported formats: youtube.com/watch, youtu.be, youtube.com/playlist, youtube.com/shorts'
+            )
+          );
           return;
         }
       }
@@ -102,7 +113,7 @@ export class DownloadCommand {
         if (!runtimeEnvironment.isInteractive) {
           console.log(
             chalk.yellow(
-              '⚠ Warning: --browser flag without value ignored in non-interactive mode.'
+              '⚠ --browser flag without value ignored in non-interactive mode.'
             )
           );
         } else {
@@ -139,9 +150,10 @@ export class DownloadCommand {
       preflightSpinner?.stop();
 
       if (!preparedContext.capabilities.ytDlpAvailable) {
+        console.log(chalk.red('✘ yt-dlp was not found.'));
         console.log(
-          chalk.red(
-            '✘ yt-dlp is not available. Please install it and try again.'
+          chalk.yellow(
+            '\nInstall yt-dlp and ensure it is available in PATH.\n\n  pip install yt-dlp\n\nVerify with: ytx doctor'
           )
         );
         return;
@@ -150,7 +162,7 @@ export class DownloadCommand {
       if (preparedContext.capabilities.ffmpegAvailable === false) {
         console.log(
           chalk.yellow(
-            '⚠️  ffmpeg not detected. Merging and post-processing may be unavailable.'
+            '⚠ ffmpeg was not detected. Merging and post-processing may fail.\n  Install ffmpeg: sudo apt install ffmpeg'
           )
         );
       }
@@ -169,24 +181,13 @@ export class DownloadCommand {
       spinner?.stop();
 
       if (!inspectRes.ok) {
-        console.log(
-          chalk.red(`✘ Inspection failed: ${inspectRes.error.message}`)
+        const classified = this.failureClassifier.classifyInspectionFailure(
+          inspectRes.error.message,
+          1
         );
-        const errLower = inspectRes.error.message.toLowerCase();
-        if (
-          errLower.includes('members') ||
-          errLower.includes('private') ||
-          errLower.includes('sign in') ||
-          errLower.includes('age') ||
-          errLower.includes('cookie')
-        ) {
-          console.log(
-            chalk.yellow('\nThis content may require authentication.')
-          );
-          console.log(
-            chalk.yellow(`Try:\n  ytx download "${url}" --browser firefox\n`)
-          );
-        }
+        console.log(
+          this.diagnosticFormatter.formatFailure(classified, options.verbose)
+        );
         return;
       }
 
@@ -264,11 +265,21 @@ export class DownloadCommand {
         };
       }
 
-      // 2.6 Output Path Resolution (non-interactive, deterministic)
       const resolvedOutputPath = await this.outputPathResolver.resolve(
         options.output,
         appConfig.outputPath
       );
+      if (
+        options.output &&
+        resolvedOutputPath !==
+          this.outputPathResolver.normalizePath(options.output)
+      ) {
+        console.log(
+          chalk.yellow(
+            `⚠ Output path "${options.output}" is not valid. Using default: ${resolvedOutputPath}`
+          )
+        );
+      }
       globalOverrides.outputPath = resolvedOutputPath;
 
       // 3. Prompt for Preset or Custom
@@ -540,10 +551,7 @@ export class DownloadCommand {
             : `${checkSymbol} File saved to: ${resolvedFilename}`;
           console.log(chalk.green(saveMessage));
         } else {
-          console.log(chalk.red('\n✘ Download failed:'));
-          for (const issue of res.error) {
-            console.log(chalk.red(`  - [${issue.category}] ${issue.message}`));
-          }
+          this.printWorkflowFailure(res.error, options.verbose);
         }
       } else {
         const res = await this.mp3Workflow.run(profile);
@@ -553,44 +561,37 @@ export class DownloadCommand {
             : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
           console.log(chalk.green(saveMessage));
         } else {
-          console.log(chalk.red('\n✘ Download failed:'));
-          for (const issue of res.error) {
-            console.log(chalk.red(`  - [${issue.category}] ${issue.message}`));
-          }
+          this.printWorkflowFailure(res.error, options.verbose);
         }
       }
     } catch (e) {
       if (e instanceof Error && e.name === 'ExitPromptError') {
-        console.log(chalk.yellow('\n⚠️ Operation aborted by user.'));
-      } else if (e instanceof Error && e.message.includes('ENOENT')) {
-        console.log(
-          chalk.red(
-            `\n✘ Command not found. Ensure yt-dlp and ffmpeg are installed and on PATH.`
-          )
-        );
-      } else if (
-        e instanceof Error &&
-        (e.message.includes('EACCES') || e.message.includes('permission'))
-      ) {
-        console.log(
-          chalk.red(
-            `\n✘ Permission denied. Check file/directory permissions for the output path.`
-          )
-        );
-      } else if (
-        e instanceof Error &&
-        (e.message.includes('ENOSPC') || e.message.includes('disk'))
-      ) {
-        console.log(chalk.red(`\n✘ Disk full. Free up space and try again.`));
+        console.log(chalk.yellow('\n⚠ Operation aborted by user.'));
       } else {
+        const classified = this.failureClassifier.classifyFromError(e);
         console.log(
-          chalk.red(
-            `\n✘ Unexpected error: ${e instanceof Error ? e.message : String(e)}`
-          )
+          '\n' +
+            this.diagnosticFormatter.formatFailure(classified, options.verbose)
         );
       }
     } finally {
       renderer.stop();
+    }
+  }
+
+  private printWorkflowFailure(
+    issues: { category: string; message: string }[],
+    verbose?: boolean
+  ): void {
+    for (const issue of issues) {
+      const result = { exitCode: 1, stdout: '', stderr: issue.message };
+      const classified = this.failureClassifier.classifyFromProcessResult(
+        result,
+        'yt-dlp'
+      );
+      console.log(
+        '\n' + this.diagnosticFormatter.formatFailure(classified, verbose)
+      );
     }
   }
 }

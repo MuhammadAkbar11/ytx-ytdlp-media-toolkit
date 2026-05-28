@@ -1,9 +1,9 @@
-export type RuntimeLineType = 
-  | 'progress' 
-  | 'warning' 
-  | 'error' 
-  | 'info' 
-  | 'debug' 
+export type RuntimeLineType =
+  | 'progress'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'debug'
   | 'unknown';
 
 export interface ClassifiedLine {
@@ -36,17 +36,18 @@ export class LineClassifier {
       return { type: 'error', raw: line };
     }
 
-    // Informational lines from specific post-processors
     if (
-      trimmed.startsWith('[ExtractAudio]') || 
-      trimmed.startsWith('[Merger]') || 
+      trimmed.startsWith('[ExtractAudio]') ||
+      trimmed.startsWith('[Merger]') ||
       trimmed.startsWith('[Metadata]') ||
-      trimmed.startsWith('[Thumbnails]')
+      trimmed.startsWith('[Thumbnails]') ||
+      trimmed.startsWith('[VideoConvertor]') ||
+      trimmed.startsWith('[Fixup') ||
+      trimmed.startsWith('[download] Destination:')
     ) {
       return { type: 'info', raw: line };
     }
 
-    // General yt-dlp log lines with brackets
     if (trimmed.startsWith('[') && trimmed.includes(']')) {
       return { type: 'info', raw: line };
     }

@@ -5,20 +5,18 @@ import { createAppError } from '../../utils/errors';
 import { YtDlpInfo } from '../../types/domain';
 import { SessionInspectionCache } from '../cache/session-inspection-cache';
 import { RuntimeContext } from '../runtime/runtime-context';
+import { FailureClassifier } from '../errors/failure-classifier';
 
 export class InspectionService {
+  private failureClassifier: FailureClassifier;
+
   constructor(
     private processRunner: ProcessRunner,
     private cache: SessionInspectionCache
-  ) {}
+  ) {
+    this.failureClassifier = new FailureClassifier();
+  }
 
-  /**
-   * Fetches metadata for a given URL using yt-dlp.
-   * Uses a session-scoped cache to avoid redundant network calls.
-   *
-   * @param url The validated URL to inspect.
-   * @returns A Result containing the parsed YtDlpInfo or an AppError.
-   */
   async inspect(
     url: string,
     context?: RuntimeContext
@@ -40,42 +38,11 @@ export class InspectionService {
       const result = await this.processRunner.run('yt-dlp', args);
 
       if (result.exitCode !== 0) {
-        // Classify common yt-dlp failure patterns for better diagnostics
-        const stderrLower = result.stderr.toLowerCase();
-        let diagnosticHint = '';
-        if (
-          stderrLower.includes('sign in') ||
-          stderrLower.includes('login') ||
-          stderrLower.includes('cookie')
-        ) {
-          diagnosticHint =
-            ' (may require authentication — try: ytx download <url> --browser firefox)';
-        } else if (
-          stderrLower.includes('private') ||
-          stderrLower.includes('members only')
-        ) {
-          diagnosticHint = ' (content may be private or members-only)';
-        } else if (
-          stderrLower.includes('not available') ||
-          stderrLower.includes('unavailable')
-        ) {
-          diagnosticHint = ' (content may be region-locked or removed)';
-        } else if (
-          stderrLower.includes('network') ||
-          stderrLower.includes('connection') ||
-          stderrLower.includes('timeout')
-        ) {
-          diagnosticHint = ' (network issue — check connectivity)';
-        }
-
-        return fail(
-          createAppError(
-            'DOWNLOAD_FAILED',
-            `yt-dlp inspection failed (exit ${result.exitCode}): ${result.stderr.trim()}${diagnosticHint}`,
-            'fatal',
-            'process'
-          )
+        const classified = this.failureClassifier.classifyInspectionFailure(
+          result.stderr,
+          result.exitCode
         );
+        return fail(classified.error);
       }
 
       try {
@@ -86,7 +53,7 @@ export class InspectionService {
         return fail(
           createAppError(
             'DOWNLOAD_FAILED',
-            `Failed to parse yt-dlp JSON output. Raw output starts with: ${result.stdout.slice(0, 200)}`,
+            'Failed to parse video information from yt-dlp.',
             'fatal',
             'process',
             parseError
@@ -94,16 +61,8 @@ export class InspectionService {
         );
       }
     } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : String(e);
-      return fail(
-        createAppError(
-          'DOWNLOAD_FAILED',
-          `Failed to run yt-dlp inspection: ${errorMsg}`,
-          'fatal',
-          'process',
-          e
-        )
-      );
+      const classified = this.failureClassifier.classifyFromError(e);
+      return fail(classified.error);
     }
   }
 }

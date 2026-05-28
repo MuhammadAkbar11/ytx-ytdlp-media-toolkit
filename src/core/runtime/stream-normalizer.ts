@@ -10,14 +10,14 @@ export class StreamNormalizer {
    */
   processChunk(chunk: string): string[] {
     this.buffer += chunk;
-    
+
     // Split on \r\n, \n, or \r
     const lines = this.buffer.split(/\r\n|\n|\r/);
-    
-    // The last element is either an incomplete line or an empty string 
+
+    // The last element is either an incomplete line or an empty string
     // if the chunk ended with a newline character.
     this.buffer = lines.pop() || '';
-    
+
     // Return all lines that are completed in this chunk
     return lines;
   }

@@ -121,6 +121,6 @@ describe('FilenamePreview', () => {
     };
 
     const result = await preview.generatePreview(profile);
-    expect(result).toContain('Error: yt-dlp failed');
+    expect(result).toContain('Error:');
   });
 });

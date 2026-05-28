@@ -73,7 +73,7 @@ export class TerminalRenderer {
           this.spinner = null;
         }
         this.clearProgress();
-        console.log(chalk.red(`✘ Download failed: ${event.error}`));
+        console.log(chalk.red(`✘ ${event.error}`));
         break;
       case 'warning':
         this.logAboveRenderer(chalk.yellow(`⚠︎ Warning: ${event.message}`));

@@ -27,11 +27,10 @@ export class RetryingProcessRunner implements ProcessRunner {
       try {
         result = await this.inner.run(command, args, options);
       } catch (e) {
-        // Spawn failure or stream error — not retryable
         const errorMsg = e instanceof Error ? e.message : String(e);
         this.eventStream.emit({
           type: 'failed',
-          error: `Process spawn failed for '${command}': ${errorMsg}`,
+          error: `Failed to start ${command}. ${errorMsg}`,
         });
         throw e;
       }

@@ -32,8 +32,10 @@ export class SearchablePlaylistSelector {
         });
         const results = fuse.search(searchQuery.trim());
         filteredItems = results.map((r) => r.item);
-        
-        console.log(`\nFound ${filteredItems.length} match${filteredItems.length === 1 ? '' : 'es'}\n`);
+
+        console.log(
+          `\nFound ${filteredItems.length} match${filteredItems.length === 1 ? '' : 'es'}\n`
+        );
       }
     }
 
@@ -50,7 +52,8 @@ export class SearchablePlaylistSelector {
     }));
 
     const selectedIndices = await checkbox({
-      message: 'Select items to download (Space to toggle, A to toggle all, Enter to confirm):',
+      message:
+        'Select items to download (Space to toggle, A to toggle all, Enter to confirm):',
       choices,
       loop: false,
       pageSize: 15,

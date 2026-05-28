@@ -30,7 +30,6 @@ export class FilenamePreview {
       if (result.exitCode === 0) {
         let filename = result.stdout.trim();
 
-        // Fix extension in preview because yt-dlp --get-filename returns the raw stream extension
         if (profile.mediaKind === 'audio') {
           const audioFormat = profile.audioOptions?.format || 'mp3';
           filename = filename.replace(/\.[^/.]+$/, `.${audioFormat}`);
@@ -40,10 +39,10 @@ export class FilenamePreview {
 
         return filename;
       } else {
-        return `Error: yt-dlp failed with exit code ${result.exitCode}`;
+        return `Error: Could not predict filename (exit code ${result.exitCode})`;
       }
-    } catch (e) {
-      return `Error: ${e instanceof Error ? e.message : String(e)}`;
+    } catch {
+      return `Error: Could not predict filename`;
     }
   }
 

@@ -23,21 +23,20 @@ async function main() {
     .version('0.1.0')
     .option('--debug-runtime', 'Enable deep runtime diagnostics');
 
-  // Initialize services with error boundary
   let services;
   try {
     services = bootstrap();
   } catch (error) {
+    console.error(chalk.red('\n✘ Failed to initialize application.'));
     console.error(
-      chalk.red(`\n✘ Bootstrap Error: Failed to initialize application.`)
-    );
-    console.error(
-      chalk.red(
-        `Details: ${error instanceof Error ? error.message : String(error)}`
+      chalk.yellow(
+        `\n${error instanceof Error ? error.message : String(error)}`
       )
     );
     if (process.argv.includes('--debug-runtime') && error instanceof Error) {
-      console.error(chalk.red(`Stack: ${error.stack}`));
+      console.error(chalk.gray(`\n${error.stack}`));
+    } else {
+      console.error(chalk.yellow('\nRun with --debug-runtime for details.'));
     }
     process.exit(1);
   }
@@ -181,7 +180,7 @@ async function main() {
     });
 
   const shutdown = () => {
-    console.log(chalk.yellow('\n\n⚠️ Interrupted. Cleaning up...'));
+    console.log(chalk.yellow('\n⚠ Interrupted. Cleaning up...'));
     gracefulShutdownManager.shutdown();
     process.exit(0);
   };
@@ -193,18 +192,24 @@ async function main() {
     await program.parseAsync(process.argv);
   } catch (error) {
     console.error(
-      chalk.red(
-        `\n✘ CLI Error: ${error instanceof Error ? error.message : String(error)}`
-      )
+      chalk.red(`\n✘ ${error instanceof Error ? error.message : String(error)}`)
     );
     if (process.argv.includes('--debug-runtime') && error instanceof Error) {
-      console.error(chalk.red(`Stack: ${error.stack}`));
+      console.error(chalk.gray(`\n${error.stack}`));
     }
     process.exit(1);
   }
 }
 
 main().catch((err) => {
-  console.error(chalk.red('\n✘ Uncaught Fatal Error:'), err);
+  console.error(chalk.red('\n✘ An unexpected error occurred.'));
+  if (err instanceof Error) {
+    console.error(chalk.yellow(`\n${err.message}`));
+    if (process.argv.includes('--debug-runtime')) {
+      console.error(chalk.gray(`\n${err.stack}`));
+    } else {
+      console.error(chalk.yellow('\nRun with --debug-runtime for details.'));
+    }
+  }
   process.exit(1);
 });

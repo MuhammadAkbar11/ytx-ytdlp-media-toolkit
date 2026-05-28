@@ -6,7 +6,9 @@ export type ErrorCategory =
   | 'configuration'
   | 'network'
   | 'dependency'
-  | 'workflow';
+  | 'workflow'
+  | 'filesystem'
+  | 'authentication';
 
 export type AppErrorCode =
   | 'INVALID_URL'
@@ -15,7 +17,18 @@ export type AppErrorCode =
   | 'INVALID_CONFIG'
   | 'DOWNLOAD_FAILED'
   | 'OUTPUT_NOT_WRITABLE'
-  | 'UNSUPPORTED_BROWSER';
+  | 'UNSUPPORTED_BROWSER'
+  | 'PERMISSION_DENIED'
+  | 'DISK_FULL'
+  | 'NETWORK_ERROR'
+  | 'AUTH_REQUIRED'
+  | 'CONTENT_UNAVAILABLE'
+  | 'UNSUPPORTED_URL'
+  | 'PLAYLIST_ERROR'
+  | 'ARIA2_FAILED'
+  | 'PROCESS_SPAWN_FAILED'
+  | 'FFMPEG_FAILED'
+  | 'RATE_LIMITED';
 
 export interface AppError {
   code: AppErrorCode;

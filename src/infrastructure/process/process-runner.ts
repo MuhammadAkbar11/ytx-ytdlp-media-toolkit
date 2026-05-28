@@ -1,4 +1,7 @@
-import { ProcessSpawnOptions, ProcessExecutionResult } from '../../types/process';
+import {
+  ProcessSpawnOptions,
+  ProcessExecutionResult,
+} from '../../types/process';
 
 export interface ProcessRunner {
   run(

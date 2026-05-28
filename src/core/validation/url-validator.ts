@@ -49,13 +49,7 @@ export function validateUrl(input: string): Result<ValidatedUrl, AppError> {
     });
   } catch (e) {
     return fail(
-      createAppError(
-        'INVALID_URL',
-        'Malformed URL',
-        'fatal',
-        'validation',
-        e
-      )
+      createAppError('INVALID_URL', 'Malformed URL', 'fatal', 'validation', e)
     );
   }
 }

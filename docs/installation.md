@@ -25,16 +25,19 @@ bun --version
 ### Package Manager (recommended)
 
 **Debian / Ubuntu:**
+
 ```bash
 sudo apt update && sudo apt install yt-dlp
 ```
 
 **Fedora:**
+
 ```bash
 sudo dnf install yt-dlp
 ```
 
 **Arch Linux:**
+
 ```bash
 sudo pacman -S yt-dlp
 ```
@@ -63,16 +66,19 @@ yt-dlp --version
 Required for merging video/audio streams and extracting audio.
 
 **Debian / Ubuntu:**
+
 ```bash
 sudo apt install ffmpeg
 ```
 
 **Fedora:**
+
 ```bash
 sudo dnf install ffmpeg
 ```
 
 **Arch Linux:**
+
 ```bash
 sudo pacman -S ffmpeg
 ```
@@ -88,16 +94,19 @@ ffmpeg -version
 Enables faster multi-threaded downloads when enabled via config or CLI flag.
 
 **Debian / Ubuntu:**
+
 ```bash
 sudo apt install aria2
 ```
 
 **Fedora:**
+
 ```bash
 sudo dnf install aria2
 ```
 
 **Arch Linux:**
+
 ```bash
 sudo pacman -S aria2
 ```
@@ -190,3 +199,4 @@ Or via pip:
 
 ```bash
 pip install --upgrade yt-dlp
+```

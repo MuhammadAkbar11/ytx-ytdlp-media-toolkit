@@ -24,11 +24,13 @@ export class RuntimePreflightResolver {
    * @returns A PreparedRuntimeContext with capability flags resolved.
    */
   async resolve(context: RuntimeContext): Promise<PreparedRuntimeContext> {
-    const [ytDlpAvailable, ffmpegAvailable, aria2Available] = await Promise.all([
-      this.checkAvailable('yt-dlp', ['--version']),
-      this.checkAvailable('ffmpeg', ['-version']),
-      this.checkAvailable('aria2c', ['--version']),
-    ]);
+    const [ytDlpAvailable, ffmpegAvailable, aria2Available] = await Promise.all(
+      [
+        this.checkAvailable('yt-dlp', ['--version']),
+        this.checkAvailable('ffmpeg', ['-version']),
+        this.checkAvailable('aria2c', ['--version']),
+      ]
+    );
 
     const capabilities: RuntimeCapabilities = {
       ytDlpAvailable,
@@ -42,7 +44,10 @@ export class RuntimePreflightResolver {
     };
   }
 
-  private async checkAvailable(command: string, args: string[]): Promise<boolean> {
+  private async checkAvailable(
+    command: string,
+    args: string[]
+  ): Promise<boolean> {
     try {
       const result = await this.processRunner.run(command, args, {
         bufferStdout: false,

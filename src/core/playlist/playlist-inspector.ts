@@ -40,7 +40,19 @@ export class PlaylistInspector {
       });
 
       if (result.exitCode !== 0) {
-        return fail(`yt-dlp failed to fetch playlist: ${errorOutput.trim()}`);
+        const lower = errorOutput.toLowerCase();
+        if (
+          lower.includes('private') ||
+          lower.includes('sign in') ||
+          lower.includes('cookie')
+        ) {
+          return fail(
+            'This playlist may be private. Try with --browser <name> for authenticated access.'
+          );
+        }
+        return fail(
+          'Failed to fetch playlist information. The playlist may be invalid or unavailable.'
+        );
       }
 
       const items: PlaylistItem[] = [];

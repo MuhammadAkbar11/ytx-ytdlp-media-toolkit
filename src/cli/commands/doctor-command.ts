@@ -2,6 +2,7 @@
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
 import { ConfigService } from '../../core/config/config.service';
 import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
+import chalk from 'chalk';
 import * as fs from 'fs';
 
 export class DoctorCommand {
@@ -11,32 +12,39 @@ export class DoctorCommand {
     private outputPathResolver: OutputPathResolver
   ) {}
 
-  /**
-   * Executes the doctor command.
-   */
   async execute(): Promise<void> {
-    console.log('Running diagnostics...\n');
+    console.log(chalk.blue('➤ Running environment diagnostics...\n'));
 
-    // 1. Check yt-dlp
-    await this.checkDependency('yt-dlp', ['--version'], 'yt-dlp');
+    await this.checkDependency(
+      'yt-dlp',
+      ['--version'],
+      'yt-dlp',
+      'pip install yt-dlp'
+    );
+    await this.checkDependency(
+      'ffmpeg',
+      ['-version'],
+      'ffmpeg',
+      'sudo apt install ffmpeg'
+    );
+    await this.checkDependency(
+      'aria2c',
+      ['--version'],
+      'aria2c',
+      'sudo apt install aria2'
+    );
 
-    // 2. Check ffmpeg
-    await this.checkDependency('ffmpeg', ['-version'], 'ffmpeg');
-
-    // 3. Check aria2c
-    await this.checkDependency('aria2c', ['--version'], 'aria2');
-
-    // 4. Check Config
     this.checkConfig();
-
-    // 5. Check Download Directory
     await this.checkDownloadDirectory();
+
+    console.log('');
   }
 
   private async checkDependency(
     command: string,
     args: string[],
-    label: string
+    label: string,
+    installHint: string
   ): Promise<void> {
     try {
       const result = await this.processRunner.run(command, args, {
@@ -44,12 +52,16 @@ export class DoctorCommand {
       });
       if (result.exitCode === 0) {
         const version = result.stdout.split('\n')[0].trim();
-        console.log(`[✓] ${label} is available: ${version}`);
+        console.log(chalk.green(`  [✓] ${label} is available: ${version}`));
       } else {
-        console.log(`[✗] ${label} failed with exit code ${result.exitCode}`);
+        console.log(
+          chalk.red(`  [✗] ${label} failed (exit code ${result.exitCode})`)
+        );
+        console.log(chalk.yellow(`      Install: ${installHint}`));
       }
     } catch (e) {
-      console.log(`[✗] ${label} is NOT available or failed to run`);
+      console.log(chalk.red(`  [✗] ${label} is not installed or not in PATH`));
+      console.log(chalk.yellow(`      Install: ${installHint}`));
     }
   }
 
@@ -57,10 +69,13 @@ export class DoctorCommand {
     try {
       const config = this.configService.getAll();
       console.log(
-        `[✓] Config is accessible (${Object.keys(config).length} keys found)`
+        chalk.green(
+          `  [✓] Config is accessible (${Object.keys(config).length} keys)`
+        )
       );
     } catch (e) {
-      console.log('[✗] Config is NOT accessible');
+      console.log(chalk.red('  [✗] Config is not accessible'));
+      console.log(chalk.yellow('      Reset with: ytx config reset'));
     }
   }
 
@@ -69,14 +84,27 @@ export class DoctorCommand {
     const dir = this.outputPathResolver.normalizePath(rawDir);
     try {
       await fs.promises.access(dir, fs.constants.W_OK);
-      console.log(`[✓] Download directory is writable: ${dir}`);
+      console.log(chalk.green(`  [✓] Download directory is writable: ${dir}`));
     } catch (e) {
-      // Check if it exists at all
       try {
         await fs.promises.access(dir, fs.constants.F_OK);
-        console.log(`[✗] Download directory is NOT writable: ${dir}`);
+        console.log(
+          chalk.red(`  [✗] Download directory is not writable: ${dir}`)
+        );
+        console.log(
+          chalk.yellow(
+            '      Check permissions or use: ytx config set outputPath <dir>'
+          )
+        );
       } catch {
-        console.log(`[✗] Download directory does NOT exist: ${dir}`);
+        console.log(
+          chalk.red(`  [✗] Download directory does not exist: ${dir}`)
+        );
+        console.log(
+          chalk.yellow(
+            '      Create it or use: ytx config set outputPath <dir>'
+          )
+        );
       }
     }
   }

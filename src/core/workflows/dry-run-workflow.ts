@@ -103,7 +103,7 @@ export class DryRunWorkflow {
 
     // 7. Generate Preview Result
     const args = this.argumentBuilder.build(profile);
-    
+
     const result: DryRunResult = {
       url: validatedUrl,
       inspectionSummary: {

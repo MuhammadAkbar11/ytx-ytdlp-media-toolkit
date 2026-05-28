@@ -1,4 +1,7 @@
-import { TTYCapabilities, TTYCapabilityResolver } from '../terminal/tty-capability-resolver';
+import {
+  TTYCapabilities,
+  TTYCapabilityResolver,
+} from '../terminal/tty-capability-resolver';
 
 export class RuntimeEnvironment {
   private readonly capabilities: TTYCapabilities;
