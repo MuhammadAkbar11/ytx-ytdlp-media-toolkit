@@ -138,11 +138,107 @@ Falls back to `~/.config/ytx-downloader/config.json` if `XDG_CONFIG_HOME` is not
 
 Output paths are resolved in this order:
 
-1. `--output` CLI flag
-2. `outputPath` from config
-3. `~/Downloads` fallback
+| Priority | Source | Example |
+|---|---|---|
+| 1 | `--output <dir>` CLI flag | `ytx download <URL> --output ~/Videos` |
+| 2 | `outputPath` in config | `ytx config set outputPath ~/Videos` |
+| 3 | `~/Downloads` fallback | auto-applied if above are invalid or unset |
 
-Paths are normalized (tilde expansion, relative-to-absolute) and validated (exists, writable, is directory). Invalid paths fall through to the next option automatically.
+Paths are normalized (~ expansion → absolute) and validated (exists + writable + is directory). Invalid paths fall through silently to the next option.
+
+## Workflows
+
+### Playlist Downloads
+
+When a playlist URL is detected, `ytx` offers three options:
+
+```bash
+ytx download https://youtube.com/playlist?list=PLxxxxxx
+```
+
+- **Entire playlist** — download all items
+- **First item only** — download just the first video
+- **Select specific items** — fuzzy search through playlist items with arrow keys
+
+### Browser Cookies
+
+Some content requires authentication (age-restricted, private, or members-only videos).
+
+```bash
+# Prompted to select browser interactively
+ytx download <URL> --browser
+
+# Pass browser directly
+ytx download <URL> --browser firefox
+
+# Set a default browser in config
+ytx config set preferredBrowser firefox
+```
+
+Supported browsers: `chrome`, `firefox`, `edge`, `brave`, `safari`.
+
+### aria2 Downloader
+
+Enable multi-threaded downloading via aria2 for faster speeds:
+
+```bash
+ytx download <URL> --aria2
+```
+
+Requires aria2 to be installed and on `PATH`.
+
+### Non-Interactive Mode
+
+When `ytx` detects it is not running in an interactive terminal (e.g., in scripts or CI):
+
+- No interactive prompts are shown
+- CLI flags and config values drive all decisions
+- Output path uses `--output` flag → config `outputPath` → `~/Downloads` fallback
+- Missing required values produce clear error messages instead of prompting
+
+```bash
+# Scripted audio-only download to specific directory
+ytx download "https://youtube.com/watch?v=xxxxx" --audio --preset balanced --output /tmp/dl
+```
+
+### Config Migration
+
+Config migration is **fully automatic** — no commands or manual steps required.
+
+When you run any `ytx` command, the config file is loaded and its version is checked. If an older config version is detected, the migration chain runs before the command executes:
+
+| Migration | What it does |
+|---|---|
+| v1 → v2 | Version bump (no data changes) |
+| v2 → v3 | Renames the `outputDirectory` key to `outputPath` |
+
+For example, if your config file still has the old `outputDirectory` field:
+
+```json
+{
+  "version": 2,
+  "outputDirectory": "/home/user/Downloads"
+}
+```
+
+After migration it becomes:
+
+```json
+{
+  "version": 3,
+  "outputPath": "/home/user/Downloads"
+}
+```
+
+A green console message appears when migration runs: `✔ Config migrated from v2 to v3`.
+
+If a config file fails validation after migration (e.g., corrupted or missing required fields), `ytx` resets to defaults and prints the validation errors.
+
+To check your current config, run:
+
+```bash
+ytx config list
+```
 
 ## Development
 
