@@ -18,8 +18,8 @@ export class SearchablePlaylistSelector {
     }
 
     let filteredItems = items;
+    let searchWasPerformed = false;
 
-    // Optional Search/Filter Step
     if (items.length >= this.SEARCH_THRESHOLD) {
       const searchQuery = await input({
         message: 'Search playlist videos (leave empty to skip and view all):',
@@ -32,6 +32,7 @@ export class SearchablePlaylistSelector {
         });
         const results = fuse.search(searchQuery.trim());
         filteredItems = results.map((r) => r.item);
+        searchWasPerformed = true;
 
         console.log(
           `\nFound ${filteredItems.length} match${filteredItems.length === 1 ? '' : 'es'}\n`
@@ -44,11 +45,10 @@ export class SearchablePlaylistSelector {
       return undefined;
     }
 
-    // Checkbox Selection Step
     const choices = filteredItems.map((item) => ({
       name: `${item.index}. ${item.title}`,
       value: item.index.toString(),
-      checked: true, // by default select all filtered items, or maybe uncheck? Let's leave them unchecked by default so user can select, except if they filtered, they might want all filtered. Actually, let's leave them unchecked for consistency, but standard behavior is unchecked. Wait, if it's a search, maybe checked=true? Let's leave it false.
+      checked: searchWasPerformed,
     }));
 
     const selectedIndices = await checkbox({

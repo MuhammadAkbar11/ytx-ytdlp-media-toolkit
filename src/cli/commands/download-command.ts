@@ -294,13 +294,21 @@ export class DownloadCommand {
         value: 'custom',
       });
 
-      const selectedPresetId =
-        options.preset ||
-        (await select<string>({
+      let selectedPresetId: string;
+      if (options.preset) {
+        selectedPresetId = options.preset;
+      } else if (!runtimeEnvironment.isInteractive) {
+        selectedPresetId = appConfig.defaultPreset || 'custom';
+        console.log(
+          chalk.blue(`➤ Non-interactive mode: using preset "${selectedPresetId}"`)
+        );
+      } else {
+        selectedPresetId = await select<string>({
           message: 'Select a download preset:',
           choices: presetChoices,
           default: appConfig.defaultPreset || 'custom',
-        }));
+        });
+      }
 
       if (options.dryRun) {
         console.log(chalk.blue('ⓘ Dry run enabled. Previewing execution...'));
@@ -349,6 +357,11 @@ export class DownloadCommand {
           mediaKind = 'audio';
         } else if (options.video) {
           mediaKind = 'video';
+        } else if (!runtimeEnvironment.isInteractive) {
+          mediaKind = 'video';
+          console.log(
+            chalk.blue('➤ Non-interactive mode: defaulting to video format')
+          );
         } else {
           mediaKind = await select<MediaKind>({
             message: 'Select format:',
@@ -370,6 +383,8 @@ export class DownloadCommand {
             if (options.quality !== 'best') {
               quality = parseInt(options.quality, 10) as VideoQuality;
             }
+          } else if (!runtimeEnvironment.isInteractive) {
+            quality = 'best';
           } else {
             quality = await select<VideoQuality>({
               message: 'Select quality:',
@@ -386,6 +401,8 @@ export class DownloadCommand {
           let wantSubtitles: 'yes' | 'no';
           if (options.subLang) {
             wantSubtitles = 'yes';
+          } else if (!runtimeEnvironment.isInteractive) {
+            wantSubtitles = 'no';
           } else {
             wantSubtitles = await select<'yes' | 'no'>({
               message: 'Download subtitles?',
@@ -397,25 +414,35 @@ export class DownloadCommand {
           }
 
           if (wantSubtitles === 'yes') {
-            const subtitleLang =
-              (options.subLang as 'english' | 'all') ||
-              (await select<'english' | 'all'>({
+            let subtitleLang: 'english' | 'all';
+            if (options.subLang) {
+              subtitleLang = options.subLang as 'english' | 'all';
+            } else if (!runtimeEnvironment.isInteractive) {
+              subtitleLang = 'english';
+            } else {
+              subtitleLang = await select<'english' | 'all'>({
                 message: 'Select subtitle language:',
                 choices: [
                   { name: 'English', value: 'english' },
                   { name: 'All available', value: 'all' },
                 ],
-              }));
+              });
+            }
 
-            const subtitleOutput =
-              (options.subMode as 'embed' | 'separate') ||
-              (await select<'embed' | 'separate'>({
+            let subtitleOutput: 'embed' | 'separate';
+            if (options.subMode) {
+              subtitleOutput = options.subMode as 'embed' | 'separate';
+            } else if (!runtimeEnvironment.isInteractive) {
+              subtitleOutput = 'embed';
+            } else {
+              subtitleOutput = await select<'embed' | 'separate'>({
                 message: 'Subtitle output format:',
                 choices: [
                   { name: 'Embed into video', value: 'embed' },
                   { name: 'Separate file', value: 'separate' },
                 ],
-              }));
+              });
+            }
 
             overrides.subtitleOptions = {
               mode: subtitleLang,
@@ -423,27 +450,37 @@ export class DownloadCommand {
             };
           }
         } else {
-          const bitrate = await select<AudioBitrate>({
-            message: 'Select audio bitrate:',
-            choices: [
-              { name: '320kbps (Best)', value: 320 },
-              { name: '192kbps (Good)', value: 192 },
-              { name: '128kbps (Standard)', value: 128 },
-            ],
-          });
+          let bitrate: AudioBitrate;
+          if (!runtimeEnvironment.isInteractive) {
+            bitrate = 320;
+          } else {
+            bitrate = await select<AudioBitrate>({
+              message: 'Select audio bitrate:',
+              choices: [
+                { name: '320kbps (Best)', value: 320 },
+                { name: '192kbps (Good)', value: 192 },
+                { name: '128kbps (Standard)', value: 128 },
+              ],
+            });
+          }
           overrides.audioOptions = { format: 'mp3', bitrate };
         }
 
-        const customEmbedMetadata = await select<false | true>({
-          message: 'Embed custom metadata?',
-          choices: [
-            { name: 'No', value: false },
-            { name: 'Yes', value: true },
-          ],
-          default: false,
-        });
+        let configureEmbedding: boolean;
+        if (!runtimeEnvironment.isInteractive) {
+          configureEmbedding = false;
+        } else {
+          configureEmbedding = await select<false | true>({
+            message: 'Configure advanced embedding options?',
+            choices: [
+              { name: 'No', value: false },
+              { name: 'Yes', value: true },
+            ],
+            default: false,
+          });
+        }
 
-        if (customEmbedMetadata) {
+        if (configureEmbedding) {
           const embedMetadata = await select<'yes' | 'no'>({
             message: 'Embed metadata?',
             choices: [
