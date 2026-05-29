@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { ProcessRunner } from '../../infrastructure/process/process-runner';
-import { ConfigService } from '../../core/config/config.service';
+import { ConfigService } from '../../core/config/config-service';
 import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
 import chalk from 'chalk';
 import * as fs from 'fs';
@@ -59,7 +58,7 @@ export class DoctorCommand {
         );
         console.log(chalk.yellow(`      Install: ${installHint}`));
       }
-    } catch (e) {
+    } catch {
       console.log(chalk.red(`  [✗] ${label} is not installed or not in PATH`));
       console.log(chalk.yellow(`      Install: ${installHint}`));
     }
@@ -73,7 +72,7 @@ export class DoctorCommand {
           `  [✓] Config is accessible (${Object.keys(config).length} keys)`
         )
       );
-    } catch (e) {
+    } catch {
       console.log(chalk.red('  [✗] Config is not accessible'));
       console.log(chalk.yellow('      Reset with: ytx config reset'));
     }
@@ -85,7 +84,7 @@ export class DoctorCommand {
     try {
       await fs.promises.access(dir, fs.constants.W_OK);
       console.log(chalk.green(`  [✓] Download directory is writable: ${dir}`));
-    } catch (e) {
+    } catch {
       try {
         await fs.promises.access(dir, fs.constants.F_OK);
         console.log(

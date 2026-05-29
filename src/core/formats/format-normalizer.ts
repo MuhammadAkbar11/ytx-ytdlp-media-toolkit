@@ -1,5 +1,4 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { VideoFormat, NormalizedFormat, YtDlpInfo } from '../../types/domain';
+import { NormalizedFormat, YtDlpInfo } from '../../types/domain';
 
 export class FormatNormalizer {
   /**

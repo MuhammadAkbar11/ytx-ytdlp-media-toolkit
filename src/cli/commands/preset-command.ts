@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { PresetRegistry } from '../../core/presets/preset-registry';
-import { ConfigService } from '../../core/config/config.service';
-import { AppConfig } from '../../types/config';
+import { ConfigService } from '../../core/config/config-service';
 import chalk from 'chalk';
 
 export class PresetCommand {

@@ -1,5 +1,5 @@
 import { ConsoleLogger } from './utils/logger';
-import { ConfigService } from './core/config/config.service';
+import { ConfigService } from './core/config/config-service';
 import { BunProcessRunner } from './infrastructure/process/bun-process-runner';
 import { InspectionService } from './core/downloader/inspection.service';
 import { ArgumentBuilder } from './core/downloader/argument-builder';

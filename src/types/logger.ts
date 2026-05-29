@@ -1,5 +1,3 @@
-export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
-
 export interface Logger {
   debug(message: string): void;
   info(message: string): void;

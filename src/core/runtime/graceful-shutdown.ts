@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { processLifecycleManager } from '../../infrastructure/process/process-lifecycle';
 
 export class GracefulShutdownManager {
@@ -19,7 +18,7 @@ export class GracefulShutdownManager {
     for (const callback of this.cleanupCallbacks) {
       try {
         callback();
-      } catch (e) {
+      } catch {
         // Ignore errors during cleanup to ensure all callbacks run
       }
     }

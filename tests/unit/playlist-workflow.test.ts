@@ -20,8 +20,7 @@ describe('PlaylistWorkflow', () => {
 
     // Mock ProcessRunner that simulates output
     const mockProcessRunner = {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      run: async (command: string, args: string[], options?: any) => {
+      run: async (_command: string, _args: string[], options?: { onStdout?: (data: string) => void }) => {
         if (options?.onStdout) {
           options.onStdout('[download] Downloading item 1 of 2');
           options.onStdout(

@@ -1,6 +1,6 @@
 import { describe, expect, test, mock } from 'bun:test';
 import { ConfigCommand } from '../../src/cli/commands/config-command';
-import { ConfigService } from '../../src/core/config/config.service';
+import { ConfigService } from '../../src/core/config/config-service';
 
 describe('ConfigCommand', () => {
   test('should get and set config values', () => {

@@ -1,6 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { AppConfig } from './config';
-import { DownloadEvent } from './events';
 import {
   MediaKind,
   VideoQuality,
@@ -100,38 +97,4 @@ export interface DownloadSession {
   profileDraft?: Partial<DownloadProfile>;
 }
 
-// Workflow interfaces
-export interface DownloadWorkflowInput {
-  url?: string;
-  presetId?: string;
-  interactive: boolean;
-  dryRun?: boolean;
-  json?: boolean;
-  overrides?: Partial<DownloadProfile>;
-}
 
-export interface DownloadResult {
-  success: boolean;
-  outputPaths: string[];
-  warnings: string[];
-}
-
-export interface DryRunResult {
-  success: true;
-  profile: DownloadProfile;
-  args: string[];
-  expectedOutputPath?: string;
-  expectedOutputTemplate: string;
-}
-
-export interface DownloadWorkflow {
-  run(input: DownloadWorkflowInput): Promise<DownloadResult | DryRunResult>;
-}
-
-export interface YtDlpService {
-  getVersion(): Promise<string>;
-  checkAvailable(): Promise<boolean>;
-  inspect(url: string): Promise<YtDlpInspection>;
-  normalizeFormats(info: YtDlpInfo): NormalizedFormat[];
-  download(profile: DownloadProfile): AsyncIterable<DownloadEvent>;
-}

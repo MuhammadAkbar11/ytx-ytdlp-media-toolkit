@@ -1,14 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { runtimeDiagnostics } from '../../core/runtime/diagnostics/runtime-diagnostics';
 
+interface KillableProcess {
+  kill(): void;
+}
+
 export class ProcessLifecycleManager {
-  private activeProcesses = new Set<any>();
+  private activeProcesses = new Set<KillableProcess>();
 
   /**
    * Registers a process to be managed.
    * @param process The Bun Subprocess
    */
-  register(process: any): void {
+  register(process: KillableProcess): void {
     this.activeProcesses.add(process);
   }
 
@@ -16,7 +19,7 @@ export class ProcessLifecycleManager {
    * Unregisters a process.
    * @param process The Bun Subprocess
    */
-  unregister(process: any): void {
+  unregister(process: KillableProcess): void {
     this.activeProcesses.delete(process);
   }
 

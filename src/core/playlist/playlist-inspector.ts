@@ -80,8 +80,7 @@ export class PlaylistInspector {
               index: parsed.playlist_index ?? items.length + 1,
             });
           }
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        } catch (e) {
+        } catch {
           // ignore lines that are not valid JSON
         }
       }

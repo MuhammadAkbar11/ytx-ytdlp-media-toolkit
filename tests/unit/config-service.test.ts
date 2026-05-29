@@ -1,5 +1,5 @@
 import { describe, expect, test, mock } from 'bun:test';
-import { ConfigService } from '../../src/core/config/config.service';
+import { ConfigService } from '../../src/core/config/config-service';
 
 mock.module('conf', () => ({
   default: class MockConf {

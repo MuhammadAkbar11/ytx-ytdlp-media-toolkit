@@ -59,8 +59,7 @@ export class UrlNormalizer {
       }
 
       return url.toString();
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (e) {
+    } catch {
       // If it's not a valid URL, return it as is (validation will fail later)
       return input;
     }

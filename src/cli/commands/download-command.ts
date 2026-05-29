@@ -9,7 +9,7 @@ import { EventStream } from '../../core/runtime/event-stream';
 import { TerminalRenderer } from '../renderers/terminal-renderer';
 import { validateUrl } from '../../core/validation/url-validator';
 import { ProfileBuilder } from '../../core/profiles/profile-builder';
-import { ConfigService } from '../../core/config/config.service';
+import { ConfigService } from '../../core/config/config-service';
 import { PresetRegistry } from '../../core/presets/preset-registry';
 import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
 

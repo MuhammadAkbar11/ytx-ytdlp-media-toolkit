@@ -1,4 +1,4 @@
-import { ConfigService } from '../../core/config/config.service';
+import { ConfigService } from '../../core/config/config-service';
 import { AppConfig } from '../../types/config';
 import chalk from 'chalk';
 
