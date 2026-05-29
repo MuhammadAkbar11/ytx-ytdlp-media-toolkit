@@ -9,6 +9,21 @@ import { ConfigCommand } from './cli/commands/config-command';
 import { PresetCommand } from './cli/commands/preset-command';
 import chalk from 'chalk';
 import { gracefulShutdownManager } from './core/runtime/graceful-shutdown';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+function getVersion(): string {
+  try {
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = dirname(__filename);
+    const pkg = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+    return pkg.version;
+  } catch {
+    return '0.0.0';
+  }
+}
 
 async function main() {
   if (process.argv.includes('--debug-runtime')) {
@@ -20,7 +35,7 @@ async function main() {
   program
     .name('ytx')
     .description('A CLI tool for downloading YouTube videos using yt-dlp')
-    .version('0.1.0')
+    .version(getVersion())
     .option('--debug-runtime', 'Enable deep runtime diagnostics');
 
   let services;
