@@ -57,6 +57,7 @@
   },
   "dependencies": {
     "@inquirer/prompts": "^8.4.2",
+    "cfonts": "^3.3.1",
     "chalk": "^5.6.2",
     "cli-progress": "^3.12.0",
     "commander": "^14.0.3",

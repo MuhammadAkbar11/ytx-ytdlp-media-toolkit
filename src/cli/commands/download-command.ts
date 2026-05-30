@@ -23,6 +23,7 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { gracefulShutdownManager } from '../../core/runtime/graceful-shutdown';
 import { runtimeEnvironment } from '../../core/runtime/runtime-environment';
+import { renderCliBanner } from '../renderers/cli-banner';
 import { FailureClassifier } from '../../core/errors/failure-classifier';
 import { DiagnosticFormatter } from '../../core/errors/diagnostic-formatter';
 import {
@@ -79,6 +80,11 @@ export class DownloadCommand {
     gracefulShutdownManager.registerCleanup(() => renderer.stop());
 
     try {
+      // Display banner in interactive mode
+      if (runtimeEnvironment.isInteractive) {
+        renderCliBanner();
+      }
+
       // 1. Prompt for URL if not provided
       let url = initialUrl;
       if (!url) {
