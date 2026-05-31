@@ -1,5 +1,10 @@
 import { ConfigService } from '../../core/config/config-service';
 import { AppConfig } from '../../types/config';
+import {
+  AppConfigSchema,
+  SubtitleOptionsSchema,
+  MetadataOptionsSchema,
+} from '../../core/config/config-schema';
 import chalk from 'chalk';
 
 export class ConfigCommand {
@@ -68,17 +73,33 @@ export class ConfigCommand {
     }
 
     try {
-      const currentVal = this.configService.get(key as keyof AppConfig);
+      // Validate key exists in schema
+      if (!(key in AppConfigSchema.shape)) {
+        console.error(chalk.red(`✘ Invalid configuration key: "${key}"`));
+        return;
+      }
 
-      if (
-        currentVal !== undefined &&
-        typeof parsedValue !== typeof currentVal
-      ) {
-        console.error(
-          chalk.red(
-            `✘ Type mismatch for "${key}". Expected ${typeof currentVal}, got ${typeof parsedValue}.`
-          )
+      // Build proposed config and validate with Zod schema
+      const currentConfig = this.configService.getAll();
+      const nextConfig = { ...currentConfig, [key]: parsedValue };
+      const parseResult = AppConfigSchema.safeParse(nextConfig);
+
+      if (!parseResult.success) {
+        const keyIssues = parseResult.error.issues.filter(
+          (issue) => issue.path.length === 0 || issue.path[0] === key
         );
+        const issues =
+          keyIssues.length > 0
+            ? keyIssues
+            : parseResult.error.issues;
+
+        console.error(
+          chalk.red(`✘ Invalid value for "${key}".`)
+        );
+        for (const issue of issues) {
+          console.error(chalk.yellow(`  ${issue.message}`));
+        }
+        this.printAllowedValues(key as keyof AppConfig);
         return;
       }
 
@@ -95,6 +116,71 @@ export class ConfigCommand {
         )
       );
     }
+  }
+
+  private printAllowedValues(key: keyof AppConfig): void {
+    const schemaMap: Record<string, { description?: string; _def?: any }> = {
+      preferredBrowser: AppConfigSchema.shape.preferredBrowser,
+      preferredBitrate: AppConfigSchema.shape.preferredBitrate,
+      preferredVideoQuality: AppConfigSchema.shape.preferredVideoQuality,
+      subtitleOptions: SubtitleOptionsSchema,
+      metadataOptions: MetadataOptionsSchema,
+    };
+
+    const fieldSchema = schemaMap[key as string];
+    if (!fieldSchema) return;
+
+    const options = this.extractOptions(fieldSchema);
+    if (options.length > 0) {
+      console.error(chalk.cyan('  Allowed values:'));
+      for (const opt of options) {
+        console.error(chalk.cyan(`    - ${opt}`));
+      }
+    }
+  }
+
+  private extractOptions(schema: any): string[] {
+    const options: string[] = [];
+    const type = schema?.def?.type ?? schema?._def?.type;
+
+    // Handle z.enum (Zod v4: schema.options is array of values)
+    if (type === 'enum') {
+      return schema.options ? [...schema.options] : [];
+    }
+
+    // Handle z.union of z.literal (Zod v4: def.options is array of schemas)
+    if (type === 'union') {
+      const unionOptions = schema.def?.options ?? [];
+      for (const option of unionOptions) {
+        const optType = option?.def?.type;
+        if (optType === 'literal') {
+          // Zod v4: literal has def.values as array
+          const vals = option.def?.values ?? [];
+          for (const v of vals) {
+            options.push(String(v));
+          }
+        }
+      }
+    }
+
+    // Handle z.nullable — unwrap inner type
+    if (type === 'nullable') {
+      const inner = schema.def?.innerType ?? schema._def?.innerType;
+      if (inner) {
+        const innerOptions = this.extractOptions(inner);
+        options.push(...innerOptions, 'null');
+      }
+    }
+
+    // Handle z.optional — unwrap inner type
+    if (type === 'optional') {
+      const inner = schema.def?.innerType ?? schema._def?.innerType;
+      if (inner) {
+        return this.extractOptions(inner);
+      }
+    }
+
+    return options;
   }
 
   public reset(): void {
