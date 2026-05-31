@@ -27,7 +27,6 @@ Thumbs.db
 # Dev / internal folders
 .dev/
 .agents/
-.commandcode/
 .claude/
 .opencode/
 .gemini/

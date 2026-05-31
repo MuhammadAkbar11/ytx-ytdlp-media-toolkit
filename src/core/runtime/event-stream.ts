@@ -2,11 +2,13 @@ import { DownloadEvent, EventSubscriber } from '../../types/events';
 import { LineClassifier } from './line-classifier';
 import { ProgressEventGenerator } from './progress-event-generator';
 import { runtimeDiagnostics } from './diagnostics/runtime-diagnostics';
+import { ConsoleLogger } from '../../utils/logger';
 
 export class EventStream {
   private subscribers: EventSubscriber[] = [];
   private classifier = new LineClassifier();
   private progressEventGenerator = new ProgressEventGenerator();
+  private logger = new ConsoleLogger();
 
   /**
    * Subscribes to events.
@@ -31,10 +33,14 @@ export class EventStream {
         subscriber(event);
       } catch (error) {
         const errorMessage =
-          error instanceof Error
-            ? `${error.message}\n${error.stack}`
-            : String(error);
-        runtimeDiagnostics.log('error', `Subscriber failure: ${errorMessage}`);
+          error instanceof Error ? error.message : String(error);
+        this.logger.warn(
+          `Subscriber error during "${event.type}" event: ${errorMessage}`
+        );
+        runtimeDiagnostics.log(
+          'error',
+          `Subscriber failure [event=${event.type}]: ${error instanceof Error ? `${error.message}\n${error.stack}` : String(error)}`
+        );
       }
     }
   }
