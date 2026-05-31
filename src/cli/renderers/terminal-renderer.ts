@@ -172,14 +172,16 @@ export class TerminalRenderer {
 
   private logAboveRenderer(message: string): void {
     if (this.progressBar && runtimeEnvironment.isInteractive) {
+      // Clear the current progress bar line
       if (runtimeEnvironment.supportsCursorControl) {
         readline.clearLine(process.stdout, 0);
         readline.cursorTo(process.stdout, 0);
       }
-      this.progressBar.stop();
-      this.progressBar = null;
-      this.hasStartedBar = false;
+      // Print the message (moves cursor down one line, preserving it in scrollback)
       console.log(message);
+      // Immediately redraw the progress bar on the new line — keeping the same
+      // bar instance alive avoids the flicker caused by stop()/null/recreate.
+      this.progressBar.update(this.currentPercentage, this.currentPayload);
     } else if (this.spinner) {
       this.spinner.stop();
       console.log(message);
