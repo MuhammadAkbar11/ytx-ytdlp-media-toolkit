@@ -14,6 +14,7 @@ import { PresetRegistry } from '../../core/presets/preset-registry';
 import { OutputPathResolver } from '../../core/filesystem/output-path-resolver';
 
 import { ArtifactSizeEstimator } from '../../core/runtime/artifact-size-estimator';
+import { BatchUrlResolver } from '../../core/batch/batch-url-resolver';
 import { RuntimeContextBuilder } from '../../core/runtime/runtime-context';
 import { RuntimePreflightResolver } from '../../core/preflight/runtime-preflight-resolver';
 import { PlaylistInspector } from '../../core/playlist/playlist-inspector';
@@ -45,11 +46,14 @@ export interface DownloadOptions {
   verbose?: boolean;
   aria2?: boolean;
   browser?: string | boolean;
+  file?: string;
 }
 
 export class DownloadCommand {
   private failureClassifier: FailureClassifier;
   private diagnosticFormatter: DiagnosticFormatter;
+
+  private batchUrlResolver: BatchUrlResolver;
 
   constructor(
     private inspectionService: InspectionService,
@@ -69,6 +73,7 @@ export class DownloadCommand {
   ) {
     this.failureClassifier = new FailureClassifier();
     this.diagnosticFormatter = new DiagnosticFormatter();
+    this.batchUrlResolver = new BatchUrlResolver();
   }
 
   async execute(
@@ -85,25 +90,53 @@ export class DownloadCommand {
         renderCliBanner();
       }
 
+      // Determine if this is a batch operation
+      const isBatch =
+        !!options.file || !!(initialUrl && initialUrl.includes(','));
+
+      if (isBatch) {
+        await this.executeBatch(initialUrl, options);
+        return;
+      }
+
+      // Single URL flow (existing)
       // 1. Prompt for URL if not provided
       let url = initialUrl;
       if (!url) {
         if (!runtimeEnvironment.isInteractive) {
           console.log(chalk.red('✘ URL is required in non-interactive mode.'));
-          console.log(chalk.yellow('\n  Usage: ytx <url>'));
+          console.log(
+            chalk.yellow('\n  Usage: ytx <url> or ytx "url1,url2,url3"')
+          );
           return;
         }
         url = await input({
-          message: 'Enter YouTube URL:',
-          validate: (val) => validateUrl(val).ok || 'Invalid URL',
+          message: 'Enter YouTube URL (or comma-separated URLs for batch):\n➤',
+          validate: (val) => {
+            const trimmed = val.trim();
+            if (trimmed.includes(',')) {
+              // Batch input — basic non-empty check; full validation happens in BatchUrlResolver
+              return (
+                trimmed.split(',').some((u) => u.trim().length > 0) ||
+                'At least one URL is required'
+              );
+            }
+            return validateUrl(trimmed).ok || 'Invalid URL';
+          },
         });
+
+        // Check if interactive input is a batch (comma-separated)
+        if (url && url.trim().includes(',')) {
+          await this.executeBatch(url.trim(), options);
+          return;
+        }
       } else {
         const valRes = validateUrl(url);
         if (!valRes.ok) {
           console.log(chalk.red('✘ Invalid URL provided.'));
           console.log(
             chalk.yellow(
-              '\nSupported formats: youtube.com/watch, youtu.be, youtube.com/playlist, youtube.com/shorts'
+              '\nSupported formats: youtube.com/watch, youtu.be, youtube.com/shorts'
             )
           );
           return;
@@ -306,7 +339,9 @@ export class DownloadCommand {
       } else if (!runtimeEnvironment.isInteractive) {
         selectedPresetId = appConfig.defaultPreset || 'custom';
         console.log(
-          chalk.blue(`➤ Non-interactive mode: using preset "${selectedPresetId}"`)
+          chalk.blue(
+            `➤ Non-interactive mode: using preset "${selectedPresetId}"`
+          )
         );
       } else {
         selectedPresetId = await select<string>({
@@ -619,6 +654,227 @@ export class DownloadCommand {
       }
     } finally {
       renderer.stop();
+    }
+  }
+
+  private async executeBatch(
+    initialUrl: string | undefined,
+    options: DownloadOptions
+  ): Promise<void> {
+    // Resolve batch URLs
+    const batchResult = await this.batchUrlResolver.resolve(
+      initialUrl,
+      options.file
+    );
+
+    if (!batchResult.ok) {
+      console.log(chalk.red(`✘ Batch error: ${batchResult.error.message}`));
+      return;
+    }
+
+    const { urls, duplicatesRemoved } = batchResult.value;
+
+    if (duplicatesRemoved > 0) {
+      console.log(
+        chalk.yellow(
+          `⚠ Removed ${duplicatesRemoved} duplicate URL${duplicatesRemoved > 1 ? 's' : ''}`
+        )
+      );
+    }
+
+    console.log(
+      chalk.blue(
+        `➤ Batch mode: ${urls.length} URL${urls.length > 1 ? 's' : ''} to process`
+      )
+    );
+
+    const appConfig = this.configService.getAll();
+    const resolvedOutputPath = await this.outputPathResolver.resolve(
+      options.output,
+      appConfig.outputPath
+    );
+
+    // Resolve preset once for all URLs
+    let selectedPresetId: string;
+    if (options.preset) {
+      selectedPresetId = options.preset;
+    } else if (!runtimeEnvironment.isInteractive) {
+      selectedPresetId = appConfig.defaultPreset || 'custom';
+    } else {
+      const presets = this.presetRegistry.getAllPresets();
+      const presetChoices = presets.map((p) => ({
+        name: `${p.label} - ${p.description}`,
+        value: p.id,
+      }));
+      presetChoices.unshift({
+        name: 'Custom (Configure manually)',
+        value: 'custom',
+      });
+      selectedPresetId = await select<string>({
+        message: 'Select a download preset (applies to all URLs):',
+        choices: presetChoices,
+        default: appConfig.defaultPreset || 'custom',
+      });
+    }
+
+    // Resolve format once for custom preset
+    let customMediaKind: MediaKind | undefined;
+    let customOverrides: Partial<DownloadProfile> | undefined;
+
+    if (selectedPresetId === 'custom') {
+      if (options.audio) {
+        customMediaKind = 'audio';
+      } else if (options.video) {
+        customMediaKind = 'video';
+      } else if (!runtimeEnvironment.isInteractive) {
+        customMediaKind = 'video';
+      } else {
+        customMediaKind = await select<MediaKind>({
+          message: 'Select format (applies to all URLs):',
+          choices: [
+            { name: 'Video (MP4)', value: 'video' },
+            { name: 'Audio (MP3)', value: 'audio' },
+          ],
+        });
+      }
+
+      customOverrides = { mediaKind: customMediaKind };
+
+      if (customMediaKind === 'video') {
+        customOverrides.videoQuality = options.quality
+          ? options.quality === 'best'
+            ? 'best'
+            : (parseInt(options.quality, 10) as VideoQuality)
+          : 'best';
+      } else {
+        customOverrides.audioOptions = { format: 'mp3', bitrate: 320 };
+      }
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < urls.length; i++) {
+      const url = urls[i];
+      console.log(
+        chalk.cyan(`\n━━━ [${i + 1}/${urls.length}] Processing: ${url} ━━━`)
+      );
+
+      try {
+        const result = await this.downloadSingleUrl(
+          url,
+          appConfig,
+          selectedPresetId,
+          resolvedOutputPath,
+          customOverrides,
+          options
+        );
+        if (result) {
+          successCount++;
+        } else {
+          failCount++;
+        }
+      } catch (e) {
+        failCount++;
+        console.log(
+          chalk.red(`✘ Failed: ${e instanceof Error ? e.message : String(e)}`)
+        );
+      }
+    }
+
+    console.log(chalk.cyan('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'));
+    console.log(
+      chalk.green(
+        `✔ Batch complete: ${successCount} succeeded, ${failCount} failed`
+      )
+    );
+  }
+
+  private async downloadSingleUrl(
+    url: string,
+    appConfig: ReturnType<ConfigService['getAll']>,
+    selectedPresetId: string,
+    resolvedOutputPath: string,
+    customOverrides: Partial<DownloadProfile> | undefined,
+    options: DownloadOptions
+  ): Promise<boolean> {
+    const runtimeContextBuilder = new RuntimeContextBuilder();
+    const runtimeContext = runtimeContextBuilder.build();
+
+    // Inspect
+    const inspectRes = await this.inspectionService.inspect(
+      url,
+      runtimeContext
+    );
+    if (!inspectRes.ok) {
+      const classified = this.failureClassifier.classifyInspectionFailure(
+        inspectRes.error.message,
+        1
+      );
+      console.log(
+        this.diagnosticFormatter.formatFailure(classified, options.verbose)
+      );
+      return false;
+    }
+
+    console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
+
+    // Build profile
+    let profile: DownloadProfile;
+    if (selectedPresetId !== 'custom') {
+      const preset = this.presetRegistry.getPreset(selectedPresetId);
+      profile = this.profileBuilder.build(url, appConfig, preset);
+    } else {
+      profile = this.profileBuilder.build(
+        url,
+        appConfig,
+        undefined,
+        customOverrides
+      );
+    }
+
+    profile.outputPath = resolvedOutputPath;
+
+    if (options.aria2) {
+      profile.useAria2 = true;
+    }
+
+    // Estimated size
+    const estimator = new ArtifactSizeEstimator();
+    const estimatedSize = estimator.estimate(profile, inspectRes.value);
+    if (estimatedSize) {
+      profile.estimatedSize = estimatedSize;
+    }
+
+    // Filename preview
+    const resolvedFilename = await this.filenamePreview.render(profile);
+    const checkSymbol = chalk.green('✔');
+
+    // Execute workflow
+    if (profile.mediaKind === 'video') {
+      const res = await this.mp4Workflow.run(profile);
+      if (res.ok) {
+        const saveMessage = resolvedFilename.startsWith('Error:')
+          ? `${checkSymbol} File saved to directory: ${profile.outputPath}`
+          : `${checkSymbol} File saved to: ${resolvedFilename}`;
+        console.log(chalk.green(saveMessage));
+        return true;
+      } else {
+        this.printWorkflowFailure(res.error, options.verbose);
+        return false;
+      }
+    } else {
+      const res = await this.mp3Workflow.run(profile);
+      if (res.ok) {
+        const saveMessage = resolvedFilename.startsWith('Error:')
+          ? `\n${checkSymbol} File saved to directory: ${profile.outputPath}`
+          : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
+        console.log(chalk.green(saveMessage));
+        return true;
+      } else {
+        this.printWorkflowFailure(res.error, options.verbose);
+        return false;
+      }
     }
   }
 

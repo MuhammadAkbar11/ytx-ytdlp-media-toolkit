@@ -7,6 +7,7 @@ A modern, interactive CLI for downloading YouTube videos and audio using yt-dlp.
 - **Interactive guided workflow** — prompts for format, quality, subtitles, metadata, and more
 - **MP4 video downloads** — with automatic audio/video merging via ffmpeg
 - **MP3 audio extraction** — configurable bitrate (128/192/256/320 kbps)
+- **Batch downloads** — download multiple videos via comma-separated URLs or from `.txt`/`.md` files
 - **Playlist support** — download entire playlists, first item, or select specific items with fuzzy search
 - **Browser cookie support** — download age-restricted or private content using cookies from Chrome, Firefox, Edge, Brave, or Safari
 - **Presets** — save and reuse download configurations (balanced, best quality, audio only, etc.)
@@ -86,6 +87,29 @@ ytx download <URL> --browser firefox
 # Dry-run — preview without downloading
 ytx download <URL> --dry-run
 ```
+
+### Batch Downloads
+
+Download multiple videos in a single command:
+
+```bash
+# Comma-separated URLs
+ytx download "https://youtu.be/aaa,https://youtu.be/bbb,https://youtu.be/ccc"
+
+# From a text file
+ytx download --file urls.txt
+
+# From a markdown file
+ytx download --file urls.md
+
+# Batch with preset and output directory
+ytx download --file urls.txt --preset balanced --output ~/Videos
+```
+
+- Playlist URLs are rejected in batch mode (use the playlist workflow instead)
+- Duplicate URLs are automatically removed
+- Downloads run sequentially, one at a time
+- Files should contain one URL per line; markdown links (`[text](url)`) are also supported
 
 ### Manage Configuration
 

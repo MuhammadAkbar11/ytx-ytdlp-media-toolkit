@@ -8,7 +8,8 @@ export type ErrorCategory =
   | 'dependency'
   | 'workflow'
   | 'filesystem'
-  | 'authentication';
+  | 'authentication'
+  | 'batch';
 
 export type AppErrorCode =
   | 'INVALID_URL'
@@ -28,7 +29,14 @@ export type AppErrorCode =
   | 'ARIA2_FAILED'
   | 'PROCESS_SPAWN_FAILED'
   | 'FFMPEG_FAILED'
-  | 'RATE_LIMITED';
+  | 'RATE_LIMITED'
+  | 'BATCH_NO_INPUT'
+  | 'BATCH_NO_VALID_URLS'
+  | 'BATCH_INVALID_URL'
+  | 'BATCH_PLAYLIST_REJECTED'
+  | 'BATCH_VALIDATION_ERROR'
+  | 'BATCH_UNSUPPORTED_FILE'
+  | 'BATCH_FILE_READ_ERROR';
 
 export interface AppError {
   code: AppErrorCode;

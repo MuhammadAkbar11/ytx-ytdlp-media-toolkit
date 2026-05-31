@@ -87,7 +87,8 @@ async function main() {
 
   // Default command (interactive download)
   program
-    .argument('[url]', 'Optional YouTube URL to download')
+    .argument('[url]', 'YouTube URL to download (single URL or comma-separated batch)')
+    .option('-f, --file <path>', 'Read URLs from a file (.txt or .md)')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')
     .option(
@@ -101,8 +102,9 @@ async function main() {
   // Download explicit command
   program
     .command('download')
-    .description('Download workflow (interactive by default)')
-    .argument('[url]', 'Optional YouTube URL to download')
+    .description('Download workflow (supports single URL, comma-separated batch, or --file)')
+    .argument('[url]', 'YouTube URL to download (single URL or comma-separated batch)')
+    .option('-f, --file <path>', 'Read URLs from a file (.txt or .md)')
     .option('--dry-run', 'Preview the download without executing')
     .option('--preset <id>', 'Use a specific preset')
     .option('--audio', 'Download audio only (MP3)')
