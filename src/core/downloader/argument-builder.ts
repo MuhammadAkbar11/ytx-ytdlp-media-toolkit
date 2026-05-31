@@ -1,6 +1,7 @@
 import { DownloadProfile } from '../../types/domain';
 import * as path from 'path';
 import { DownloaderStrategyResolver } from './downloader-strategy';
+import { runtimeDiagnostics } from '../runtime/diagnostics/runtime-diagnostics';
 
 export class ArgumentBuilder {
   /**
@@ -92,6 +93,12 @@ export class ArgumentBuilder {
 
     // 7. URL (Always at the end)
     args.push(profile.url);
+
+    const strategyName = profile.useAria2 ? 'aria2' : 'default';
+    runtimeDiagnostics.log(
+      'arguments',
+      `Built ${args.length} args [strategy=${strategyName}, media=${profile.mediaKind}]: ${args.join(' ')}`
+    );
 
     return args;
   }

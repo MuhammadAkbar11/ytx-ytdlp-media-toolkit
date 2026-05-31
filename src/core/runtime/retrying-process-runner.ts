@@ -5,6 +5,7 @@ import {
 } from '../../types/process';
 import { TransientFailureClassifier } from './transient-failure-classifier';
 import { EventStream } from './event-stream';
+import { runtimeDiagnostics } from './diagnostics/runtime-diagnostics';
 
 export class RetryingProcessRunner implements ProcessRunner {
   constructor(
@@ -36,15 +37,27 @@ export class RetryingProcessRunner implements ProcessRunner {
       }
 
       if (result.exitCode === 0) {
+        runtimeDiagnostics.log(
+          'retry',
+          `Success on attempt ${attempt}/${this.maxRetries}: ${command}`
+        );
         return result;
       }
 
       if (attempt >= this.maxRetries) {
+        runtimeDiagnostics.log(
+          'retry',
+          `Max retries (${this.maxRetries}) exhausted: ${command} exit=${result.exitCode}`
+        );
         return result;
       }
 
       if (this.classifier.isRetryable(result)) {
         const delay = this.baseDelayMs * Math.pow(2, attempt - 1);
+        runtimeDiagnostics.log(
+          'retry',
+          `Retryable failure on attempt ${attempt}: exit=${result.exitCode}, retrying in ${delay}ms`
+        );
 
         this.eventStream.emit({
           type: 'warning',
@@ -53,6 +66,10 @@ export class RetryingProcessRunner implements ProcessRunner {
 
         await new Promise((resolve) => setTimeout(resolve, delay));
       } else {
+        runtimeDiagnostics.log(
+          'retry',
+          `Non-retryable failure on attempt ${attempt}: exit=${result.exitCode}`
+        );
         return result;
       }
     }

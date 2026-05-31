@@ -24,6 +24,12 @@ export class BunProcessRunner implements ProcessRunner {
 
     processLifecycleManager.register(process);
 
+    const startTime = performance.now();
+    runtimeDiagnostics.log(
+      'process',
+      `Start: ${command} ${args.join(' ')}`
+    );
+
     const decoder = new TextDecoder();
 
     // Helper to read stream line by line
@@ -84,6 +90,11 @@ export class BunProcessRunner implements ProcessRunner {
       ]);
 
       const exitCode = await process.exited;
+      const duration = (performance.now() - startTime).toFixed(0);
+      runtimeDiagnostics.log(
+        'process',
+        `Complete: ${command} exit=${exitCode} duration=${duration}ms`
+      );
 
       return { exitCode, stdout, stderr };
     } catch (e) {

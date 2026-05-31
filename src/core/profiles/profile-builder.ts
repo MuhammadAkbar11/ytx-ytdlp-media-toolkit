@@ -1,5 +1,6 @@
 import { DownloadProfile, Preset } from '../../types/domain';
 import { AppConfig } from '../../types/config';
+import { runtimeDiagnostics } from '../runtime/diagnostics/runtime-diagnostics';
 
 export const SYSTEM_DEFAULTS: Partial<DownloadProfile> = {
   mediaKind: 'video',
@@ -70,6 +71,15 @@ export class ProfileBuilder {
         finalProfile.subtitleOptions.mode = 'none';
       }
     }
+
+    runtimeDiagnostics.log(
+      'profile',
+      `Composed profile: media=${finalProfile.mediaKind}, preset=${preset?.id ?? 'none'}, overrides=${overrides ? Object.keys(overrides).join(',') : 'none'}`
+    );
+    runtimeDiagnostics.log(
+      'profile',
+      `Final profile: ${JSON.stringify({ mediaKind: finalProfile.mediaKind, outputPath: finalProfile.outputPath, quality: finalProfile.videoQuality ?? finalProfile.audioOptions?.bitrate, subtitle: finalProfile.subtitleOptions.mode, metadata: finalProfile.metadataOptions })}`
+    );
 
     return finalProfile;
   }

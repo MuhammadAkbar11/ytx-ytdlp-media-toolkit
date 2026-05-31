@@ -1,5 +1,6 @@
 import { DownloadProfile } from '../../types/domain';
 import { Result, ok, fail } from '../../utils/result';
+import { runtimeDiagnostics } from '../runtime/diagnostics/runtime-diagnostics';
 
 export type ValidationCategory =
   | 'missing-fields'
@@ -63,9 +64,20 @@ export class ProfileValidator {
     }
 
     if (issues.length > 0) {
+      const issueSummary = issues
+        .map((i) => `${i.category}:${i.field ?? '?'}`)
+        .join(', ');
+      runtimeDiagnostics.log(
+        'validation',
+        `FAILED [${issueSummary}]: ${issues.map((i) => i.message).join('; ')}`
+      );
       return fail(issues);
     }
 
+    runtimeDiagnostics.log(
+      'validation',
+      `PASSED for profile [media=${profile.mediaKind}, url=${profile.url}]`
+    );
     return ok(undefined);
   }
 }
