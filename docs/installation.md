@@ -182,7 +182,7 @@ Run `ytx doctor` to identify which dependencies are missing or not on PATH.
 Some content requires authentication. Pass browser cookies explicitly:
 
 ```bash
-ytx download <URL> --browser firefox
+ytx download <URL> --browser firefox/brave/chrome
 ```
 
 Supported browsers: chrome, firefox, edge, brave, safari.

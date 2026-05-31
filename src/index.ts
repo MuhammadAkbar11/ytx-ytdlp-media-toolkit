@@ -96,7 +96,10 @@ async function main() {
       'Browser to use for cookies (chrome, firefox, edge, brave, safari)'
     )
     .action(async (url, options) => {
-      await downloadCommand.execute(url, options);
+      await downloadCommand.execute(url, {
+        ...options,
+        ...program.opts(),
+      });
     });
 
   // Download explicit command
@@ -123,7 +126,10 @@ async function main() {
       'Browser to use for cookies (chrome, firefox, edge, brave, safari)'
     )
     .action(async (url, options) => {
-      await downloadCommand.execute(url, options);
+      await downloadCommand.execute(url, {
+        ...options,
+        ...program.opts(),
+      });
     });
 
   // Doctor command

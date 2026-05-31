@@ -32,6 +32,7 @@ import {
   DownloadProfile,
   MediaKind,
   VideoQuality,
+  YtDlpInfo,
 } from '../../types';
 
 export interface DownloadOptions {
@@ -91,11 +92,13 @@ export class DownloadCommand {
       }
 
       // Determine if this is a batch operation
+      const hasFileInput =
+        typeof options.file === 'string' && options.file.trim().length > 0;
       const isBatch =
-        !!options.file || !!(initialUrl && initialUrl.includes(','));
+        hasFileInput || !!(initialUrl && initialUrl.includes(','));
 
       if (isBatch) {
-        await this.executeBatch(initialUrl, options);
+        await this.executeBatch(hasFileInput ? undefined : initialUrl, options);
         return;
       }
 
@@ -689,6 +692,63 @@ export class DownloadCommand {
     );
 
     const appConfig = this.configService.getAll();
+
+    let browserCookies: BrowserName | null = null;
+    if (options.browser === true) {
+      if (!runtimeEnvironment.isInteractive) {
+        console.log(
+          chalk.yellow(
+            '⚠ --browser flag without value ignored in non-interactive mode.'
+          )
+        );
+      } else {
+        browserCookies = await select<BrowserName>({
+          message: 'Select browser:',
+          choices: [
+            { name: 'Brave', value: 'brave' },
+            { name: 'Chrome', value: 'chrome' },
+            { name: 'Firefox', value: 'firefox' },
+            { name: 'Edge', value: 'edge' },
+            { name: 'Safari', value: 'safari' },
+          ],
+        });
+      }
+    } else if (typeof options.browser === 'string') {
+      browserCookies = options.browser as BrowserName;
+    } else if (appConfig.preferredBrowser) {
+      browserCookies = appConfig.preferredBrowser;
+    }
+
+    const runtimeContextBuilder = new RuntimeContextBuilder();
+    runtimeContextBuilder.withBrowserCookies(browserCookies);
+    const runtimeContext = runtimeContextBuilder.build();
+
+    const firstUrl = urls[0];
+    const spinner = runtimeEnvironment.isInteractive
+      ? ora('Inspecting first URL...').start()
+      : null;
+    if (!runtimeEnvironment.isInteractive) {
+      console.log(chalk.blue('➤ Inspecting first URL...'));
+    }
+    const firstInspectRes = await this.inspectionService.inspect(
+      firstUrl,
+      runtimeContext
+    );
+    spinner?.stop();
+
+    if (!firstInspectRes.ok) {
+      const classified = this.failureClassifier.classifyInspectionFailure(
+        firstInspectRes.error.message,
+        1
+      );
+      console.log(
+        this.diagnosticFormatter.formatFailure(classified, options.verbose)
+      );
+      return;
+    }
+
+    console.log(chalk.green(`✔ Found: ${firstInspectRes.value.title}`));
+
     const resolvedOutputPath = await this.outputPathResolver.resolve(
       options.output,
       appConfig.outputPath
@@ -717,7 +777,7 @@ export class DownloadCommand {
       });
     }
 
-    // Resolve format once for custom preset
+    // Resolve format and quality once for custom preset
     let customMediaKind: MediaKind | undefined;
     let customOverrides: Partial<DownloadProfile> | undefined;
 
@@ -741,13 +801,39 @@ export class DownloadCommand {
       customOverrides = { mediaKind: customMediaKind };
 
       if (customMediaKind === 'video') {
-        customOverrides.videoQuality = options.quality
-          ? options.quality === 'best'
-            ? 'best'
-            : (parseInt(options.quality, 10) as VideoQuality)
-          : 'best';
+        if (options.quality) {
+          customOverrides.videoQuality = this.parseVideoQuality(
+            options.quality
+          );
+        } else if (!runtimeEnvironment.isInteractive) {
+          customOverrides.videoQuality = 'best';
+        } else {
+          customOverrides.videoQuality = await select<VideoQuality>({
+            message: 'Select quality (applies to all URLs):',
+            choices: [
+              { name: 'Best Available', value: 'best' },
+              { name: '1080p', value: 1080 },
+              { name: '720p', value: 720 },
+              { name: '480p', value: 480 },
+            ],
+          });
+        }
       } else {
-        customOverrides.audioOptions = { format: 'mp3', bitrate: 320 };
+        const bitrate = runtimeEnvironment.isInteractive
+          ? await select<AudioBitrate>({
+              message: 'Select audio bitrate (applies to all URLs):',
+              choices: [
+                { name: '320kbps (Best)', value: 320 },
+                { name: '192kbps (Good)', value: 192 },
+                { name: '128kbps (Standard)', value: 128 },
+              ],
+            })
+          : 320;
+        customOverrides.audioOptions = { format: 'mp3', bitrate };
+      }
+
+      if (browserCookies) {
+        customOverrides.browserCookies = browserCookies;
       }
     }
 
@@ -767,7 +853,9 @@ export class DownloadCommand {
           selectedPresetId,
           resolvedOutputPath,
           customOverrides,
-          options
+          options,
+          browserCookies,
+          i === 0 ? firstInspectRes.value : undefined
         );
         if (result) {
           successCount++;
@@ -796,28 +884,36 @@ export class DownloadCommand {
     selectedPresetId: string,
     resolvedOutputPath: string,
     customOverrides: Partial<DownloadProfile> | undefined,
-    options: DownloadOptions
+    options: DownloadOptions,
+    browserCookies?: BrowserName | null,
+    inspectedInfo?: YtDlpInfo
   ): Promise<boolean> {
     const runtimeContextBuilder = new RuntimeContextBuilder();
+    runtimeContextBuilder.withBrowserCookies(browserCookies ?? null);
     const runtimeContext = runtimeContextBuilder.build();
 
-    // Inspect
-    const inspectRes = await this.inspectionService.inspect(
-      url,
-      runtimeContext
-    );
-    if (!inspectRes.ok) {
-      const classified = this.failureClassifier.classifyInspectionFailure(
-        inspectRes.error.message,
-        1
+    let inspectedValue: YtDlpInfo;
+    if (inspectedInfo) {
+      inspectedValue = inspectedInfo;
+    } else {
+      const inspectRes = await this.inspectionService.inspect(
+        url,
+        runtimeContext
       );
-      console.log(
-        this.diagnosticFormatter.formatFailure(classified, options.verbose)
-      );
-      return false;
-    }
+      if (!inspectRes.ok) {
+        const classified = this.failureClassifier.classifyInspectionFailure(
+          inspectRes.error.message,
+          1
+        );
+        console.log(
+          this.diagnosticFormatter.formatFailure(classified, options.verbose)
+        );
+        return false;
+      }
 
-    console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
+      inspectedValue = inspectRes.value;
+      console.log(chalk.green(`✔ Found: ${inspectedValue.title}`));
+    }
 
     // Build profile
     let profile: DownloadProfile;
@@ -835,13 +931,17 @@ export class DownloadCommand {
 
     profile.outputPath = resolvedOutputPath;
 
+    if (browserCookies) {
+      profile.browserCookies = browserCookies;
+    }
+
     if (options.aria2) {
       profile.useAria2 = true;
     }
 
     // Estimated size
     const estimator = new ArtifactSizeEstimator();
-    const estimatedSize = estimator.estimate(profile, inspectRes.value);
+    const estimatedSize = estimator.estimate(profile, inspectedValue);
     if (estimatedSize) {
       profile.estimatedSize = estimatedSize;
     }
@@ -892,5 +992,9 @@ export class DownloadCommand {
         '\n' + this.diagnosticFormatter.formatFailure(classified, verbose)
       );
     }
+  }
+
+  private parseVideoQuality(value: string): VideoQuality {
+    return value === 'best' ? 'best' : (parseInt(value, 10) as VideoQuality);
   }
 }

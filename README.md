@@ -82,7 +82,7 @@ ytx download <URL> --audio
 ytx download <URL> --video --quality 720
 
 # Use browser cookies for restricted content
-ytx download <URL> --browser firefox
+ytx download <URL> --browser firefox/brave/chrome
 
 # Dry-run — preview without downloading
 ytx download <URL> --dry-run
@@ -193,7 +193,7 @@ Some content requires authentication (age-restricted, private, or members-only v
 ytx download <URL> --browser
 
 # Pass browser directly
-ytx download <URL> --browser firefox
+ytx download <URL> --browser firefox/brave/chrome
 
 # Set a default browser in config
 ytx config set preferredBrowser firefox

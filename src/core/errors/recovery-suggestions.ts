@@ -71,7 +71,7 @@ export class RecoveryResolver {
         return [
           { text: 'This content requires authentication.' },
           { text: 'Try enabling browser cookies:' },
-          { text: '  ytx <url> --browser firefox' },
+          { text: '  ytx <url> --browser firefox/brave/chrome' },
         ];
       case 'CONTENT_UNAVAILABLE':
         return [

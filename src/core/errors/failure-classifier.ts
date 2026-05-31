@@ -25,7 +25,8 @@ const YT_DLP_STDERR_RULES: PatternRule[] = [
     category: 'authentication',
     recoverability: 'configuration',
     summary: 'This content requires authentication.',
-    recovery: 'Try enabling browser cookies:\n\n  ytx <url> --browser firefox',
+    recovery:
+      'Try enabling browser cookies:\n\n  ytx <url> --browser firefox/brave/chrome',
   },
   {
     patterns: ['private', 'members only', 'members-only', 'join this channel'],
@@ -34,7 +35,7 @@ const YT_DLP_STDERR_RULES: PatternRule[] = [
     recoverability: 'configuration',
     summary: 'This content is restricted to members or private.',
     recovery:
-      'Try enabling browser cookies with an authenticated session:\n\n  ytx <url> --browser firefox',
+      'Try enabling browser cookies with an authenticated session:\n\n  ytx <url> --browser firefox/brave/chrome',
   },
   {
     patterns: ['age', 'age gate', 'age-gate', 'sign in to confirm your age'],
@@ -42,7 +43,8 @@ const YT_DLP_STDERR_RULES: PatternRule[] = [
     category: 'authentication',
     recoverability: 'configuration',
     summary: 'This content is age-restricted.',
-    recovery: 'Try enabling browser cookies:\n\n  ytx <url> --browser firefox',
+    recovery:
+      'Try enabling browser cookies:\n\n  ytx <url> --browser firefox/brave/chrome',
   },
   {
     patterns: [
@@ -102,7 +104,8 @@ const YT_DLP_STDERR_RULES: PatternRule[] = [
     category: 'authentication',
     recoverability: 'configuration',
     summary: 'Access to this content was denied.',
-    recovery: 'Try enabling browser cookies:\n\n  ytx <url> --browser firefox',
+    recovery:
+      'Try enabling browser cookies:\n\n  ytx <url> --browser firefox/brave/chrome',
   },
   {
     patterns: ['http error 404', 'not found'],
