@@ -23,6 +23,7 @@ describe('PlaylistWorkflow', () => {
       run: async (_command: string, _args: string[], options?: { onStdout?: (data: string) => void }) => {
         if (options?.onStdout) {
           options.onStdout('[download] Downloading item 1 of 2');
+          options.onStdout('[download] Destination: Test Video Title.mp4');
           options.onStdout(
             '[download]  50.0% of 10.00MiB at 1.00MiB/s ETA 00:05'
           );
@@ -64,6 +65,7 @@ describe('PlaylistWorkflow', () => {
     if (events[1].type === 'item-started') {
       expect(events[1].itemIndex).toBe(1);
       expect(events[1].totalItems).toBe(2);
+      expect(events[1].title).toBe('Test Video Title');
     }
   });
 });

@@ -85,11 +85,16 @@ export class TerminalRenderer {
         this.currentPercentage = 0;
         this.currentPayload = {};
         this.estimatedSize = null;
-        this.logAboveRenderer(
-          chalk.blue(
-            `\n➤ Processing item ${event.itemIndex}/${event.totalItems}`
-          )
-        );
+        {
+          const label = event.title
+            ? `${event.title}`
+            : `item ${event.itemIndex}`;
+          this.logAboveRenderer(
+            chalk.cyan(
+              `\n━━━ [${event.itemIndex}/${event.totalItems}] Processing: ${label} ━━━`
+            )
+          );
+        }
         break;
       case 'processing':
         if (this.progressBar) {

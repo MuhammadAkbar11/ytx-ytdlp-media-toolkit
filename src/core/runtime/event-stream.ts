@@ -3,12 +3,15 @@ import { LineClassifier } from './line-classifier';
 import { ProgressEventGenerator } from './progress-event-generator';
 import { runtimeDiagnostics } from './diagnostics/runtime-diagnostics';
 import { ConsoleLogger } from '../../utils/logger';
+import path from 'path';
 
 export class EventStream {
   private subscribers: EventSubscriber[] = [];
   private classifier = new LineClassifier();
   private progressEventGenerator = new ProgressEventGenerator();
   private logger = new ConsoleLogger();
+  private pendingItemStart: { itemIndex: number; totalItems: number } | null =
+    null;
 
   /**
    * Subscribes to events.
@@ -27,6 +30,10 @@ export class EventStream {
    * @param event The event to emit.
    */
   emit(event: DownloadEvent): void {
+    // Flush any buffered item-started before completed/failed events
+    if (event.type === 'completed' || event.type === 'failed') {
+      this.flushPendingItemStart();
+    }
     runtimeDiagnostics.log('event', JSON.stringify(event));
     for (const subscriber of this.subscribers) {
       try {
@@ -43,6 +50,23 @@ export class EventStream {
         );
       }
     }
+  }
+
+  private flushPendingItemStart(): void {
+    if (this.pendingItemStart) {
+      this.emit({
+        type: 'item-started',
+        ...this.pendingItemStart,
+      });
+      this.pendingItemStart = null;
+    }
+  }
+
+  private extractTitleFromPath(destPath: string): string {
+    const basename = path.basename(destPath);
+    // Strip extension to get the title
+    const extIndex = basename.lastIndexOf('.');
+    return extIndex > 0 ? basename.substring(0, extIndex) : basename;
   }
 
   /**
@@ -85,11 +109,30 @@ export class EventStream {
           /\[download\]\s+Downloading\s+item\s+(\d+)\s+of\s+(\d+)/
         );
         if (itemMatch) {
-          this.emit({
-            type: 'item-started',
+          // Flush any pending item-started without a title
+          if (this.pendingItemStart) {
+            this.emit({
+              type: 'item-started',
+              ...this.pendingItemStart,
+            });
+          }
+          this.pendingItemStart = {
             itemIndex: parseInt(itemMatch[1], 10),
             totalItems: parseInt(itemMatch[2], 10),
-          });
+          };
+        } else if (trimmed.startsWith('[download] Destination:')) {
+          const destPath = trimmed
+            .replace('[download] Destination:', '')
+            .trim();
+          const title = this.extractTitleFromPath(destPath);
+          if (this.pendingItemStart) {
+            this.emit({
+              type: 'item-started',
+              ...this.pendingItemStart,
+              title,
+            });
+            this.pendingItemStart = null;
+          }
         } else if (trimmed.startsWith('[Merger]')) {
           this.emit({
             type: 'processing',

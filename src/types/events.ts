@@ -7,7 +7,7 @@ export type DownloadEvent =
   | { type: 'error'; message: string }
   | { type: 'completed' }
   | { type: 'failed'; error: string }
-  | { type: 'item-started'; itemIndex: number; totalItems: number }
+  | { type: 'item-started'; itemIndex: number; totalItems: number; title?: string }
   | { type: 'processing'; action: string }
   | { type: 'debug'; message: string };
 
