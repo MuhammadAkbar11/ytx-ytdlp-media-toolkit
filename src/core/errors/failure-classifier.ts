@@ -290,6 +290,32 @@ export class FailureClassifier {
     };
   }
 
+  /**
+   * Classifies inspection failure for playlist contexts.
+   * CONTENT_UNAVAILABLE is treated as non-fatal for playlists
+   * since unavailable entries should be skipped rather than abort inspection.
+   */
+  classifyPlaylistInspectionFailure(
+    stderr: string,
+    _exitCode: number
+  ): ClassifiedFailure | null {
+    const lower = stderr.toLowerCase();
+
+    for (const rule of YT_DLP_STDERR_RULES) {
+      if (rule.patterns.some((p) => lower.includes(p))) {
+        // CONTENT_UNAVAILABLE is non-fatal in playlist context
+        if (rule.code === 'CONTENT_UNAVAILABLE') {
+          return null;
+        }
+        return this.buildClassified(rule, stderr);
+      }
+    }
+
+    // For playlist inspection with --ignore-errors, a non-zero exit code
+    // may just mean some entries failed — not necessarily fatal
+    return null;
+  }
+
   private buildClassified(
     rule: PatternRule,
     rawDetail: string

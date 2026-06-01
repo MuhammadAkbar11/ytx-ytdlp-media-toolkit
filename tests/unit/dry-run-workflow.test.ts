@@ -95,7 +95,8 @@ describe('FilenamePreview', () => {
     };
 
     const result = await preview.generatePreview(profile);
-    expect(result).toBe('Video Title.mp4');
+    expect(result.filenames).toEqual(['Video Title.mp4']);
+    expect(result.isError).toBe(false);
   });
 
   test('should report failure when yt-dlp fails', async () => {
@@ -121,6 +122,7 @@ describe('FilenamePreview', () => {
     };
 
     const result = await preview.generatePreview(profile);
-    expect(result).toContain('Error:');
+    expect(result.isError).toBe(true);
+    expect(result.filenames[0]).toContain('Error:');
   });
 });

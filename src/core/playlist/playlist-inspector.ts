@@ -18,7 +18,12 @@ export class PlaylistInspector {
     url: string,
     browserCookies?: string
   ): Promise<Result<PlaylistItem[], string>> {
-    const args = ['--dump-json', '--flat-playlist', '--no-warnings'];
+    const args = [
+      '--dump-json',
+      '--flat-playlist',
+      '--no-warnings',
+      '--ignore-errors',
+    ];
     if (browserCookies) {
       args.push('--cookies-from-browser', browserCookies);
     }
@@ -39,7 +44,9 @@ export class PlaylistInspector {
         bufferStderr: true,
       });
 
-      if (result.exitCode !== 0) {
+      // With --ignore-errors, non-zero exit code may just mean some entries failed.
+      // Check for fatal playlist-level errors only.
+      if (result.exitCode !== 0 && output.trim().length === 0) {
         const lower = errorOutput.toLowerCase();
         if (
           lower.includes('private') ||
@@ -66,11 +73,13 @@ export class PlaylistInspector {
           if (parsed.entries) {
             // It's a full playlist object
             parsed.entries.forEach((entry: any, i: number) => {
-              items.push({
-                id: entry.id || '',
-                title: entry.title || entry.id || 'Unknown Title',
-                index: entry.playlist_index ?? i + 1,
-              });
+              if (entry.id) {
+                items.push({
+                  id: entry.id || '',
+                  title: entry.title || entry.id || 'Unknown Title',
+                  index: entry.playlist_index ?? i + 1,
+                });
+              }
             });
           } else if (parsed.id && parsed.title) {
             // It's an individual item object (from --flat-playlist per-line dump)

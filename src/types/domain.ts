@@ -71,6 +71,12 @@ export interface RuntimeCapabilities {
   subtitlesSupported: boolean;
 }
 
+export interface SkippedPlaylistEntry {
+  id: string;
+  title: string;
+  reason: string;
+}
+
 export interface YtDlpInfo {
   id?: string;
   title?: string;
@@ -81,6 +87,7 @@ export interface YtDlpInfo {
   rawFormats?: VideoFormat[];
   subtitles?: Record<string, unknown>;
   automaticCaptions?: Record<string, unknown>;
+  skippedEntries?: SkippedPlaylistEntry[];
 }
 
 export interface YtDlpInspection {

@@ -3,7 +3,10 @@ import { InspectionService } from '../../core/downloader/inspection.service';
 import { Mp4DownloadWorkflow } from '../../core/workflows/mp4-download-workflow';
 import { Mp3DownloadWorkflow } from '../../core/workflows/mp3-download-workflow';
 import { SubtitleWorkflow } from '../../core/workflows/subtitle-workflow';
-import { FilenamePreview } from '../renderers/filename-preview';
+import {
+  FilenamePreview,
+  FilenamePreviewResult,
+} from '../renderers/filename-preview';
 import { DryRunWorkflow } from '../../core/workflows/dry-run-workflow';
 import { EventStream } from '../../core/runtime/event-stream';
 import { TerminalRenderer } from '../renderers/terminal-renderer';
@@ -216,10 +219,13 @@ export class DownloadCommand {
       if (!runtimeEnvironment.isInteractive) {
         console.log(chalk.blue('➤ Inspecting URL...'));
       }
-      const inspectRes = await this.inspectionService.inspect(
-        url,
-        runtimeContext
-      );
+      // Check if this is a playlist URL to use tolerant inspection
+      const preValRes = validateUrl(url);
+      const isPlaylistUrl = preValRes.ok && preValRes.value.type === 'playlist';
+
+      const inspectRes = isPlaylistUrl
+        ? await this.inspectionService.inspectPlaylist(url, runtimeContext)
+        : await this.inspectionService.inspect(url, runtimeContext);
       spinner?.stop();
 
       if (!inspectRes.ok) {
@@ -234,6 +240,30 @@ export class DownloadCommand {
       }
 
       console.log(chalk.green(`✔ Found: ${inspectRes.value.title}`));
+
+      // Show skipped playlist entries feedback
+      if (
+        inspectRes.value.skippedEntries &&
+        inspectRes.value.skippedEntries.length > 0
+      ) {
+        const skippedCount = inspectRes.value.skippedEntries.length;
+        const availableCount = inspectRes.value.entriesCount
+          ? inspectRes.value.entriesCount - skippedCount
+          : undefined;
+        console.log(
+          chalk.yellow(
+            `\n⚠ ${skippedCount} unavailable video${skippedCount > 1 ? 's' : ''} skipped`
+          )
+        );
+        if (availableCount !== undefined) {
+          console.log(chalk.blue(`  Available videos: ${availableCount}`));
+        }
+        if (options.verbose) {
+          for (const entry of inspectRes.value.skippedEntries) {
+            console.log(chalk.dim(`  - ${entry.title}: ${entry.reason}`));
+          }
+        }
+      }
 
       // 2.5 Playlist Prompt
       let globalOverrides: Partial<DownloadProfile> = {};
@@ -608,9 +638,8 @@ export class DownloadCommand {
       }
 
       // 4.5 Filename Preview
-      const resolvedFilename = await this.filenamePreview.render(profile);
+      const previewResult = await this.filenamePreview.render(profile);
 
-      const checkSymbol = chalk.green('✔');
       // 5. Execute workflow
       if (profile.mediaKind === 'video') {
         let res;
@@ -627,20 +656,14 @@ export class DownloadCommand {
         }
 
         if (res.ok) {
-          const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `${checkSymbol} File saved to directory: ${profile.outputPath}`
-            : `${checkSymbol} File saved to: ${resolvedFilename}`;
-          console.log(chalk.green(saveMessage));
+          this.printSavedMessage(previewResult, profile.outputPath);
         } else {
           this.printWorkflowFailure(res.error, options.verbose);
         }
       } else {
         const res = await this.mp3Workflow.run(profile);
         if (res.ok) {
-          const saveMessage = resolvedFilename.startsWith('Error:')
-            ? `\n${checkSymbol} File saved to directory: ${profile.outputPath}`
-            : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
-          console.log(chalk.green(saveMessage));
+          this.printSavedMessage(previewResult, profile.outputPath);
         } else {
           this.printWorkflowFailure(res.error, options.verbose);
         }
@@ -947,17 +970,13 @@ export class DownloadCommand {
     }
 
     // Filename preview
-    const resolvedFilename = await this.filenamePreview.render(profile);
-    const checkSymbol = chalk.green('✔');
+    const previewResult = await this.filenamePreview.render(profile);
 
     // Execute workflow
     if (profile.mediaKind === 'video') {
       const res = await this.mp4Workflow.run(profile);
       if (res.ok) {
-        const saveMessage = resolvedFilename.startsWith('Error:')
-          ? `${checkSymbol} File saved to directory: ${profile.outputPath}`
-          : `${checkSymbol} File saved to: ${resolvedFilename}`;
-        console.log(chalk.green(saveMessage));
+        this.printSavedMessage(previewResult, profile.outputPath);
         return true;
       } else {
         this.printWorkflowFailure(res.error, options.verbose);
@@ -966,14 +985,40 @@ export class DownloadCommand {
     } else {
       const res = await this.mp3Workflow.run(profile);
       if (res.ok) {
-        const saveMessage = resolvedFilename.startsWith('Error:')
-          ? `\n${checkSymbol} File saved to directory: ${profile.outputPath}`
-          : `\n${checkSymbol} File saved to: ${resolvedFilename}`;
-        console.log(chalk.green(saveMessage));
+        this.printSavedMessage(previewResult, profile.outputPath);
         return true;
       } else {
         this.printWorkflowFailure(res.error, options.verbose);
         return false;
+      }
+    }
+  }
+
+  private printSavedMessage(
+    previewResult: FilenamePreviewResult,
+    outputPath: string
+  ): void {
+    const checkSymbol = chalk.green('✔');
+    if (previewResult.isError) {
+      console.log(
+        chalk.green(`\n${checkSymbol} File saved to directory: ${outputPath}`)
+      );
+    } else if (previewResult.filenames.length === 1) {
+      console.log(
+        chalk.green(
+          `\n${checkSymbol} File saved to: ${previewResult.filenames[0]}`
+        )
+      );
+    } else {
+      console.log(
+        chalk.green(
+          `\n${checkSymbol} ${previewResult.filenames.length} files saved:`
+        )
+      );
+      for (let i = 0; i < previewResult.filenames.length; i++) {
+        console.log(
+          `  ${chalk.dim(`${i + 1}.`)} ${previewResult.filenames[i]}`
+        );
       }
     }
   }

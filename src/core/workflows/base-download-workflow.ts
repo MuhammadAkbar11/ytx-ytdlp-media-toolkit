@@ -66,6 +66,24 @@ export class BaseDownloadWorkflow {
       });
 
       if (result.exitCode !== 0) {
+        // For playlists with --ignore-errors, a non-zero exit code may just
+        // mean some entries failed. If stderr only contains entry-level
+        // failures (content unavailable), treat as partial success.
+        const isPlaylist =
+          profile.playlist &&
+          (profile.playlist.mode === 'entire_playlist' ||
+            profile.playlist.mode === 'selected_items');
+
+        if (isPlaylist && this.isPartialSuccess(stderrLines)) {
+          this.eventStream.emit({
+            type: 'warning',
+            message:
+              'Some playlist entries were unavailable and have been skipped.',
+          });
+          this.eventStream.emit({ type: 'completed' });
+          return ok(result);
+        }
+
         const classified = this.failureClassifier.classifyFromProcessResult(
           result,
           'yt-dlp'
@@ -97,5 +115,63 @@ export class BaseDownloadWorkflow {
         },
       ]);
     }
+  }
+
+  /**
+   * Determines if a non-zero exit code is due to entry-level failures only.
+   * If all stderr content matches known entry-unavailable patterns,
+   * the download is considered a partial success (some items downloaded).
+   */
+  private isPartialSuccess(stderrLines: string[]): boolean {
+    if (stderrLines.length === 0) return false;
+
+    const entryLevelPatterns = [
+      'video unavailable',
+      'video is unavailable',
+      'private video',
+      'this video is private',
+      'this video has been removed',
+      'video has been removed',
+      'no longer available',
+      'this content is no longer available',
+      'this video is not available',
+      'sign in to confirm',
+      'members only',
+      'members-only',
+      'join this channel',
+      'this live event',
+      'premiere will begin',
+      'is unavailable',
+      'unavailable video',
+    ];
+
+    const nonEmptyLines = stderrLines.filter(
+      (line) => line.trim().length > 0
+    );
+
+    // Every stderr line must match an entry-level pattern or be ignorable
+    for (const line of nonEmptyLines) {
+      const lower = line.toLowerCase().trim();
+
+      // Skip yt-dlp progress/download status lines
+      if (
+        lower.startsWith('[download]') ||
+        lower.startsWith('[youtube]') ||
+        lower.startsWith('warning:') ||
+        lower.startsWith('[info]') ||
+        lower.startsWith('[debug]')
+      ) {
+        continue;
+      }
+
+      // Check if it matches an entry-level unavailable pattern
+      const isEntryLevel = entryLevelPatterns.some((p) => lower.includes(p));
+      if (!isEntryLevel) {
+        // This line indicates a real error, not just unavailable entries
+        return false;
+      }
+    }
+
+    return true;
   }
 }

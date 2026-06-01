@@ -66,10 +66,13 @@ export class ArgumentBuilder {
     if (profile.playlist) {
       if (profile.playlist.mode === 'entire_playlist') {
         args.push('--yes-playlist');
+        // Skip unavailable entries instead of aborting the entire playlist
+        args.push('--ignore-errors');
       } else if (profile.playlist.mode === 'first_video') {
         args.push('--no-playlist');
       } else if (profile.playlist.mode === 'selected_items') {
         args.push('--playlist-items', profile.playlist.selectedItems || '1');
+        args.push('--ignore-errors');
       }
     }
 
