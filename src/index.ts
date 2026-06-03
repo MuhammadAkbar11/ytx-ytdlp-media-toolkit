@@ -112,12 +112,6 @@ async function main() {
     .option('--preset <id>', 'Use a specific preset')
     .option('--audio', 'Download audio only (MP3)')
     .option('--video', 'Download video (MP4)')
-    .option(
-      '--quality <quality>',
-      'Preferred video quality (2160, 1440, 1080, 720, 480, best)'
-    )
-    .option('--sub-lang <lang>', 'Download subtitles (english, all)')
-    .option('--sub-mode <mode>', 'Subtitle mode (embed, separate)')
     .option('--output <dir>', 'Output directory')
     .option('-v, --verbose', 'Enable verbose output')
     .option('--aria2', 'Use aria2 for multi-threaded downloads')

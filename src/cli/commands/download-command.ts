@@ -43,9 +43,6 @@ export interface DownloadOptions {
   preset?: string;
   audio?: boolean;
   video?: boolean;
-  quality?: string;
-  subLang?: string;
-  subMode?: string;
   output?: string;
   verbose?: boolean;
   aria2?: boolean;
@@ -355,41 +352,52 @@ export class DownloadCommand {
       globalOverrides.outputPath = resolvedOutputPath;
 
       // 3. Prompt for Preset or Custom
-      const presets = this.presetRegistry.getAllPresets();
-      const presetChoices = presets.map((p) => ({
-        name: `${p.label} - ${p.description}`,
-        value: p.id,
-      }));
+      // If --audio or --video is provided, skip preset selection and go directly to custom flow
+      const hasPresetShortcut = options.audio || options.video;
 
-      presetChoices.unshift({
-        name: 'Custom (Configure manually)',
-        value: 'custom',
-      });
+      let selectedPresetId: string | null = null;
 
-      let selectedPresetId: string;
       if (options.preset) {
+        // Explicit --preset flag always takes precedence
         selectedPresetId = options.preset;
-      } else if (!runtimeEnvironment.isInteractive) {
-        selectedPresetId = appConfig.defaultPreset || 'custom';
-        console.log(
-          chalk.blue(
-            `➤ Non-interactive mode: using preset "${selectedPresetId}"`
-          )
-        );
-      } else {
-        selectedPresetId = await select<string>({
-          message: 'Select a download preset:',
-          choices: presetChoices,
-          default: appConfig.defaultPreset || 'custom',
+      } else if (!hasPresetShortcut) {
+        // No shortcut flags — show the preset selection prompt
+        const presets = this.presetRegistry.getAllPresets();
+        const presetChoices = presets.map((p) => ({
+          name: `${p.label} - ${p.description}`,
+          value: p.id,
+        }));
+
+        presetChoices.unshift({
+          name: 'Custom (Configure manually)',
+          value: 'custom',
         });
+
+        if (!runtimeEnvironment.isInteractive) {
+          selectedPresetId = appConfig.defaultPreset || 'custom';
+          console.log(
+            chalk.blue(
+              `➤ Non-interactive mode: using preset "${selectedPresetId}"`
+            )
+          );
+        } else {
+          selectedPresetId = await select<string>({
+            message: 'Select a download preset:',
+            choices: presetChoices,
+            default: appConfig.defaultPreset || 'custom',
+          });
+        }
       }
+      // When hasPresetShortcut is true, selectedPresetId stays null,
+      // and we fall through to the custom flow below where --audio/--video are handled.
 
       if (options.dryRun) {
+        const dryRunPresetId = selectedPresetId || 'custom';
         console.log(chalk.blue('ⓘ Dry run enabled. Previewing execution...'));
         const dryRunRes = await this.dryRunWorkflow.run(
           url,
           appConfig,
-          selectedPresetId
+          dryRunPresetId
         );
 
         if (!dryRunRes.ok) {
@@ -420,7 +428,7 @@ export class DownloadCommand {
 
       let profile: DownloadProfile;
 
-      if (selectedPresetId !== 'custom') {
+      if (selectedPresetId && selectedPresetId !== 'custom') {
         const preset = this.presetRegistry.getPreset(selectedPresetId);
         profile = this.profileBuilder.build(url, appConfig, preset);
         console.log(chalk.green(`✔ Using preset: ${preset?.label}`));
@@ -452,12 +460,7 @@ export class DownloadCommand {
 
         if (mediaKind === 'video') {
           let quality: VideoQuality;
-          if (options.quality) {
-            quality = options.quality as VideoQuality;
-            if (options.quality !== 'best') {
-              quality = parseInt(options.quality, 10) as VideoQuality;
-            }
-          } else if (!runtimeEnvironment.isInteractive) {
+          if (!runtimeEnvironment.isInteractive) {
             quality = 'best';
           } else {
             quality = await select<VideoQuality>({
@@ -473,9 +476,7 @@ export class DownloadCommand {
           overrides.videoQuality = quality;
 
           let wantSubtitles: 'yes' | 'no';
-          if (options.subLang) {
-            wantSubtitles = 'yes';
-          } else if (!runtimeEnvironment.isInteractive) {
+          if (!runtimeEnvironment.isInteractive) {
             wantSubtitles = 'no';
           } else {
             wantSubtitles = await select<'yes' | 'no'>({
@@ -489,9 +490,7 @@ export class DownloadCommand {
 
           if (wantSubtitles === 'yes') {
             let subtitleLang: 'english' | 'all';
-            if (options.subLang) {
-              subtitleLang = options.subLang as 'english' | 'all';
-            } else if (!runtimeEnvironment.isInteractive) {
+            if (!runtimeEnvironment.isInteractive) {
               subtitleLang = 'english';
             } else {
               subtitleLang = await select<'english' | 'all'>({
@@ -504,9 +503,7 @@ export class DownloadCommand {
             }
 
             let subtitleOutput: 'embed' | 'separate';
-            if (options.subMode) {
-              subtitleOutput = options.subMode as 'embed' | 'separate';
-            } else if (!runtimeEnvironment.isInteractive) {
+            if (!runtimeEnvironment.isInteractive) {
               subtitleOutput = 'embed';
             } else {
               subtitleOutput = await select<'embed' | 'separate'>({
@@ -617,7 +614,7 @@ export class DownloadCommand {
       if (options.verbose) {
         this.eventStream.emit({
           type: 'debug',
-          message: `preset: ${selectedPresetId}`,
+          message: `preset: ${selectedPresetId || 'custom (--audio/--video)'}`,
         });
         this.eventStream.emit({
           type: 'debug',
@@ -778,33 +775,38 @@ export class DownloadCommand {
     );
 
     // Resolve preset once for all URLs
-    let selectedPresetId: string;
+    // If --audio or --video is provided, skip preset selection
+    const hasPresetShortcut = options.audio || options.video;
+    let selectedPresetId: string | null = null;
+
     if (options.preset) {
       selectedPresetId = options.preset;
-    } else if (!runtimeEnvironment.isInteractive) {
-      selectedPresetId = appConfig.defaultPreset || 'custom';
-    } else {
-      const presets = this.presetRegistry.getAllPresets();
-      const presetChoices = presets.map((p) => ({
-        name: `${p.label} - ${p.description}`,
-        value: p.id,
-      }));
-      presetChoices.unshift({
-        name: 'Custom (Configure manually)',
-        value: 'custom',
-      });
-      selectedPresetId = await select<string>({
-        message: 'Select a download preset (applies to all URLs):',
-        choices: presetChoices,
-        default: appConfig.defaultPreset || 'custom',
-      });
+    } else if (!hasPresetShortcut) {
+      if (!runtimeEnvironment.isInteractive) {
+        selectedPresetId = appConfig.defaultPreset || 'custom';
+      } else {
+        const presets = this.presetRegistry.getAllPresets();
+        const presetChoices = presets.map((p) => ({
+          name: `${p.label} - ${p.description}`,
+          value: p.id,
+        }));
+        presetChoices.unshift({
+          name: 'Custom (Configure manually)',
+          value: 'custom',
+        });
+        selectedPresetId = await select<string>({
+          message: 'Select a download preset (applies to all URLs):',
+          choices: presetChoices,
+          default: appConfig.defaultPreset || 'custom',
+        });
+      }
     }
 
     // Resolve format and quality once for custom preset
     let customMediaKind: MediaKind | undefined;
     let customOverrides: Partial<DownloadProfile> | undefined;
 
-    if (selectedPresetId === 'custom') {
+    if (selectedPresetId === null || selectedPresetId === 'custom') {
       if (options.audio) {
         customMediaKind = 'audio';
       } else if (options.video) {
@@ -824,11 +826,7 @@ export class DownloadCommand {
       customOverrides = { mediaKind: customMediaKind };
 
       if (customMediaKind === 'video') {
-        if (options.quality) {
-          customOverrides.videoQuality = this.parseVideoQuality(
-            options.quality
-          );
-        } else if (!runtimeEnvironment.isInteractive) {
+        if (!runtimeEnvironment.isInteractive) {
           customOverrides.videoQuality = 'best';
         } else {
           customOverrides.videoQuality = await select<VideoQuality>({
@@ -873,7 +871,7 @@ export class DownloadCommand {
         const result = await this.downloadSingleUrl(
           url,
           appConfig,
-          selectedPresetId,
+          selectedPresetId || 'custom',
           resolvedOutputPath,
           customOverrides,
           options,
@@ -1037,9 +1035,5 @@ export class DownloadCommand {
         '\n' + this.diagnosticFormatter.formatFailure(classified, verbose)
       );
     }
-  }
-
-  private parseVideoQuality(value: string): VideoQuality {
-    return value === 'best' ? 'best' : (parseInt(value, 10) as VideoQuality);
   }
 }
