@@ -1,69 +1,55 @@
 {
   "name": "ytx",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A modern, interactive Linux-only CLI for downloading YouTube videos and audio using yt-dlp",
   "main": "src/index.ts",
   "type": "module",
   "license": "MIT",
+  "author": {
+    "name": "MuhammadAkbar11"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit.git"
   },
+  "homepage": "https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit#readme",
   "bugs": {
     "url": "https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit/issues"
   },
-  "homepage": "https://github.com/MuhammadAkbar11/ytx-ytdlp-media-toolkit#readme",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "dev:hot": "bun --hot src/index.ts",
+    "start": "bun run src/index.ts",
+    "build": "tsc",
+    "test": "bun test",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
   "keywords": [
     "youtube",
-    "yt-dlp",
     "downloader",
+    "yt-dlp",
+    "cli",
     "video",
     "audio",
     "mp3",
     "mp4",
-    "cli",
-    "bun",
     "linux"
   ],
-  "engines": {
-    "bun": ">=1.0.0"
-  },
-  "scripts": {
-    "dev": "bun run src/index.ts",
-    "dev:hot": "bun --watch --hot run src/index.ts",
-    "build": "tsc",
-    "start": "bun run dist/index.js",
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
-    "format": "prettier . --write",
-    "format:check": "prettier . --check",
-    "test": "bun test",
-    "test:watch": "bun test --watch"
-  },
-  "bin": {
-    "ytx": "./src/index.ts"
+  "dependencies": {
+    "@inquirer/prompts": "^7.2.0",
+    "chalk": "^5.3.0",
+    "commander": "^13.1.0",
+    "ora": "^8.1.1",
+    "zod": "^3.24.0"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
-    "@types/bun": "^1.3.13",
-    "@types/cli-progress": "^3.11.6",
-    "@typescript-eslint/eslint-plugin": "^8.59.2",
-    "@typescript-eslint/parser": "^8.59.2",
-    "eslint": "^10.3.0",
-    "eslint-config-prettier": "^10.1.8",
-    "globals": "^17.6.0",
-    "prettier": "^3.8.3",
-    "typescript": "^5.0.0"
-  },
-  "dependencies": {
-    "@inquirer/prompts": "^8.4.2",
-    "cfonts": "^3.3.1",
-    "chalk": "^5.6.2",
-    "cli-progress": "^3.12.0",
-    "commander": "^14.0.3",
-    "conf": "^15.1.0",
-    "fuse.js": "^7.3.0",
-    "ora": "^9.4.0",
-    "zod": "^4.4.3"
+    "@types/bun": "latest",
+    "@types/node": "^22.10.0",
+    "eslint": "^9.17.0",
+    "prettier": "^3.4.0",
+    "typescript": "^5.7.0"
   }
 }

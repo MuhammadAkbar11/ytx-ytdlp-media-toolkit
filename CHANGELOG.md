@@ -2,6 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0] - 2026-06-03
+
+### Added
+
+- Batch download support with comma-separated URLs and file input (`.txt`/`.md`) (`f5b0e08`)
+- Video title extraction from download destinations with `item-started` events now including titles for improved UI rendering (`2212870`)
+- Playlist filename previews and improved partial download success handling for unavailable items (`8ac05ec`)
+- Runtime diagnostic logging instrumented across core components for enhanced observability (`2394e04`)
+- Zod schema validation for `config set` commands with descriptive allowed-value error messages (`99181a7`)
+- Branded ASCII startup banner for interactive CLI sessions (`a7aad0d`)
+- Unit tests for subscriber error isolation in EventStream (`71b32dc`)
+
+### Changed
+
+- Preset selection prompt is now skipped when `--audio` or `--video` flags are provided, jumping directly to the relevant custom flow (`f7e0e05`)
+- Terminal renderer now logs messages without destroying the progress bar instance, preventing visual glitches (`864a451`)
+- EventStream subscriber error logging improved with proper isolation and ConsoleLogger integration (`71b32dc`)
+
+### Fixed
+
+- Interactive prompts for batch download workflows now function correctly (`e366a04`)
+
+### Removed
+
+- Deprecated CLI flags `--quality <value>`, `--sub-lang <value>`, and `--sub-mode <value>` from both default and download commands (`f7e0e05`)
+  - Quality and subtitle options are now selected exclusively through interactive prompts in the custom flow
+
+### Refactored
+
+- Remove deprecated CLI quality and subtitle flags in favor of interactive preset flow (`f7e0e05`)
+- Terminal renderer log message handling (`864a451`)
+- EventStream subscriber error isolation and logging (`71b32dc`)
+
 ## [0.1.0] - 2026-05-29
 
 ### Added
